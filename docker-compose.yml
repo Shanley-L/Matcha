@@ -1,0 +1,72 @@
+services:
+  # Backend - Symfony
+  backend:
+    image: php:8.2-fpm
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    container_name: matcha_backend
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/php.ini:/usr/local/etc/php/php.ini
+    env_file: .env
+    depends_on:
+      - db
+    networks:
+      - matcha_network
+
+  # Frontend - React
+  frontend:
+    image: node:20-alpine
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    container_name: matcha_frontend
+    env_file: .env
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+    networks:
+      - matcha_network
+
+  # Base de Données - MySQL
+  db:
+    image: mariadb:latest
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql  # Assure la persistance des données
+    ports:
+      - "3306:3306"  # Optionnel pour l'accès externe à la base de données
+    networks:
+      - matcha_network
+
+  # Serveur Web - Nginx
+  nginx:
+    image: nginx:latest
+    build:
+      context: ./
+      dockerfile: ./nginx/Dockerfile
+    container_name: matcha_nginx
+    env_file: .env
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf # Fichier de config Nginx
+      - ./frontend/build:/var/www/html/frontend # Frontend en mode production
+      - ./backend/public:/var/www/html/backend # Point d'entrée pour Symfony
+    ports:
+      - "8080:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - matcha_network
+
+networks:
+  matcha_network:
+    driver: bridge
+
+volumes:
+  db_data:
