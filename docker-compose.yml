@@ -1,16 +1,12 @@
 services:
-  # Backend - Symfony
+  # Backend - Flask
   backend:
-    image: php:8.2-fpm
     build:
       context: ./backend
-      dockerfile: ./Dockerfile
-    container_name: matcha_backend
-    working_dir: /var/www/html
-    volumes:
-      - ./backend:/var/www/html
-      - ./backend/php.ini:/usr/local/etc/php/php.ini
+      dockerfile: Dockerfile
     env_file: .env
+    ports:
+      - "${BACKEND_PORT}:5000"
     depends_on:
       - db
     networks:

@@ -1,20 +1,12 @@
-FROM php:8.2-fpm
+FROM python:3.9-slim
 
-RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    unzip \
-    git \
-    && docker-php-ext-install zip
+WORKDIR /app
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-WORKDIR /var/www/html
+COPY . .
 
-COPY . /var/www/html
+EXPOSE 5000
 
-#ptet pas obligatoire
-# ENV COMPOSER_ALLOW_SUPERUSER=1
-
-RUN composer install --no-scripts --no-interaction
-
-EXPOSE 9000
+CMD ["flask", "run", "--host=0.0.0.0"]

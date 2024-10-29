@@ -4,7 +4,7 @@ re: clean run
 
 run :
 	@echo "Building and running the app"
-	docker-compose up --build
+	docker compose up --build
 
 down :
 	@echo "Stopping the app"
