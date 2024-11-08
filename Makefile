@@ -1,6 +1,6 @@
 all: run
 
-re: clean run
+re: down run
 
 run :
 	@echo "Building and running the app"
@@ -13,6 +13,5 @@ down :
 clean: down
 	@echo "Cleaning up"
 	docker system prune -af
-	rm -rf ./frontend/node_modules
 
 .PHONY: all setup run down

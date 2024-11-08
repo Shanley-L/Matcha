@@ -11,7 +11,7 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - db
+      - mariadb
     networks:
       - matcha_network
 
@@ -26,13 +26,14 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/package.json:/app/package.json
     ports:
       - "3000:3000"
     networks:
       - matcha_network
 
   # Base de Données - MySQL
-  db:
+  mariadb:
     image: mariadb:latest
     env_file: .env
     volumes:
@@ -41,6 +42,7 @@ services:
       - "3306:3306"  # Optionnel
     networks:
       - matcha_network
+
 
   # Serveur Web - Nginx
   nginx:

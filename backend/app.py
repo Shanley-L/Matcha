@@ -1,11 +1,56 @@
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+import mysql.connector
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 
+# Connexion à la base de données
+
+db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME'),
+    'port': int(os.getenv('DB_PORT', 3306))
+}
+
+# db = mysql.connector.connect(db_config)
+
 @app.route('/')
 def home():
-    return jsonify({"message": "WEeLCOOOME to Matcha!"})
+    try:
+        connection = mysql.connector.connect(**db_config)
+        print("test")
+        cursor = connection.cursor()
+        cursor.execute("SELECT DATABASE();")
+        db_name = cursor.fetchone()[0]
+        cursor.close()
+        connection.close()
+        return jsonify({"message": f"WELCOME to Matcha! Connected to DB: {db_name}"})
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    hashed_password = generate_password_hash(data['password'])
+    cursor = db.cursor()
+    cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
+                   (data['username'], data['email'], hashed_password))
+    db.commit()
+    return jsonify({"message": "User registered successfully!"})
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users WHERE email = %s", (data['email'],))
+    user = cursor.fetchone()
+    if user and check_password_hash(user['password'], data['password']):
+        return jsonify({"message": "Login successful!"})
+    return jsonify({"message": "Invalid credentials"}), 401
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
