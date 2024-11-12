@@ -8,7 +8,7 @@ run :
 
 down :
 	@echo "Stopping the app"
-	docker compose down --rmi all --volumes
+	docker compose down
 
 clean: down
 	@echo "Cleaning up"

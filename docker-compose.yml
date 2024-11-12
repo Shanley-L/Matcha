@@ -13,7 +13,7 @@ services:
     depends_on:
       - mariadb
     networks:
-      - matcha_network
+      - m-network
 
   # Frontend - React
   frontend:
@@ -30,7 +30,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - matcha_network
+      - m-network
 
   # Base de Données - MySQL
   mariadb:
@@ -39,9 +39,9 @@ services:
     volumes:
       - db_data:/var/lib/mysql 
     ports:
-      - "3306:3306"  # Optionnel
+      - "3306:3306"
     networks:
-      - matcha_network
+      - m-network
 
 
   # Serveur Web - Nginx
@@ -61,11 +61,10 @@ services:
     depends_on:
       - backend
     networks:
-      - matcha_network
+      - m-network
 
 networks:
-  matcha_network:
-    driver: bridge
+  m-network:
 
 volumes:
   db_data:
