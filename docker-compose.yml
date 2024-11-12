@@ -13,7 +13,7 @@ services:
     depends_on:
       - mariadb
     networks:
-      - m-network
+      - m-network-back
 
   # Frontend - React
   frontend:
@@ -30,18 +30,18 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - m-network
+      - m-network-front
 
   # Base de Données - MySQL
   mariadb:
     image: mariadb:latest
     env_file: .env
-    volumes:
-      - db_data:/var/lib/mysql 
+    volumes: 
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
     networks:
-      - m-network
+      - m-network-back
 
 
   # Serveur Web - Nginx
@@ -61,10 +61,12 @@ services:
     depends_on:
       - backend
     networks:
-      - m-network
+      - m-network-front
+      - m-network-back
 
 networks:
-  m-network:
+  m-network-back:
+  m-network-front:
 
 volumes:
   db_data:

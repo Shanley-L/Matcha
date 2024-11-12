@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 # Connexion à la base de données
 db_config = {
@@ -30,22 +30,23 @@ def home():
         db_name = cursor.fetchone()[0]
         cursor.close()
         connection.close()
+        print("good")
         return jsonify({"message": f"WELCOME to Matcha! Connected to DB: {db_name}"})
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
-@app.route('/auth/register', methods=['POST'])
+@app.route('/api/auth/register', methods=['POST', 'GET'])
 def register():
     # Récupération des données
     data = request.json
     hashed_password = generate_password_hash(data['password'])
 
-    # Connexion à la base de données
+    # # Connexion à la base de données
     try:
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
         cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                       (data['username'], data['email'], hashed_password))
+                       (data['name'], data['email'], hashed_password))
         connection.commit()
         cursor.close()
         connection.close()
@@ -54,7 +55,8 @@ def register():
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 
-@app.route('/login', methods=['POST'])
+
+@app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.json
     try:
