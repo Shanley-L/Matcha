@@ -1,7 +1,8 @@
 import React from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
+import axios from '../config/axios';
+
 
 const RegisterSchema = Yup.object().shape({
     name: Yup.string().required('Required'),
@@ -13,10 +14,12 @@ const Register = () => {
     const handleSubmit = async (values) => {
         try {
             console.log("testing...")
-            const response = await axios.post('http://localhost:5000/api/auth/register', values);
+            const response = await axios.post('/api/auth/register', values);
             console.log(response.data);
+            alert("User registered successfully");
         } catch (error) {
             console.log(error);
+            alert("Error registering user");
         }
     }
 

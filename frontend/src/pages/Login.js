@@ -1,7 +1,7 @@
 import React from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
+import axios from '../config/axios';
 
 const Loginschema = Yup.object().shape({
     email: Yup.string().email('Invalid email').required('Required'),
@@ -11,10 +11,13 @@ const Loginschema = Yup.object().shape({
 const Login = () => {
     const handleSubmit = async (values) => {
         try {
-            const response = await axios.post('http://localhost/api/auth/login', values);
+            const response = await axios.get('/api/user/profile', values);
+            // const response = await axios.post('/api/auth/login', values);
             console.log(response.data);
+            alert("User logged in successfully");
         } catch (error) {
             console.log(error);
+            alert("Error logging in user");
         }
     }
 
