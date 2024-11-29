@@ -52,5 +52,4 @@
 
 1. **Backend :** Symfony (PHP) est un excellent choix pour structurer un backend robuste et sécurisé.
 2. **Frontend :** React(js)
-3. **Base de Données :**
-   - **MySQL ou PostgreSQL** conviennent pour la gestion des profils et interactions utilisateurs en tant que bases relationnelles.
+3. **Base de Données :** MySQL 
