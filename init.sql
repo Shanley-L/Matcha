@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS users (
     gender ENUM('male', 'female', 'non-binary', 'other') DEFAULT 'other',
     sexual_orientation ENUM('heterosexual', 'homosexual', 'bisexual', 'other') DEFAULT 'other',
     looking_for ENUM('friends', 'lovers', 'ons', 'i-dont-know', 'gaming friends') DEFAULT 'i-dont-know',
-    activ BOOLEAN,
+    activ BOOLEAN DEFAULT FALSE,
     height INT,
     bio TEXT,
     birthdate DATE,
-    age INT,
+    age INT NOT NULL,
     profile_picture VARCHAR(255),
     interests TEXT,
     is_email_verified BOOLEAN DEFAULT FALSE,
@@ -37,3 +37,27 @@ CREATE TABLE IF NOT EXISTS user_interactions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS conversations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user1_id INT NOT NULL,
+    user2_id INT NOT NULL,
+    l_user_id INT GENERATED ALWAYS AS (LEAST(user1_id, user2_id)) STORED,
+    g_user_id INT GENERATED ALWAYS AS (GREATEST(user1_id, user2_id)) STORED,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_conv (l_user_id, g_user_id),
+    FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    content TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+

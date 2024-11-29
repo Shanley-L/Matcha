@@ -11,7 +11,7 @@ const Loginschema = Yup.object().shape({
 const Login = () => {
     const handleSubmit = async (values) => {
         try {
-            const response = await axios.get('/api/user/profile', values);
+            const response = await axios.get('/api/user/profile', values); // needs one log to work
             // const response = await axios.post('/api/auth/login', values);
             console.log(response.data);
             alert("User logged in successfully");

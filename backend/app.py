@@ -1,3 +1,4 @@
+from flask_socketio import SocketIO, join_room, leave_room, send
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import mysql.connector
@@ -7,6 +8,7 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
 CORS(app, supports_credentials=True)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 db_config = {
     'host': os.getenv('DB_HOST'),
@@ -16,10 +18,72 @@ db_config = {
     'port': int(os.getenv('DB_PORT', 3306))
 }
 
+@app.route('/api/messages', methods=['POST'])
+def send_message():
+    data = request.json
+    conversation_id = data.get('conversation_id')
+    sender_id = data.get('sender_id')
+    content = data.get('content')
+    if not conversation_id or not sender_id or not content:
+        return jsonify({"error": "All fields are required"}), 400
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        cursor.execute("""
+            INSERT INTO messages (conversation_id, sender_id, content)
+            VALUES (%s, %s, %s)""", (conversation_id, sender_id, content))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        socketio.emit('message', {
+            "conversation_id": conversation_id,
+            "sender_id": sender_id,
+            "content": content
+        }, to=str(conversation_id))
+        return jsonify({"message": "Message sent"}), 201
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+
+@app.route('/api/conversations', methods=['POST'])
+def create_conversation():
+    data = request.json
+    user1_id = data.get('user1_id')
+    user2_id = data.get('user2_id')
+    if not user1_id or not user2_id:
+        return jsonify({"error": "Both user1_id and user2_id are required"}), 400
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT id FROM conversations
+            WHERE (user1_id = %s AND user2_id = %s) OR (user1_id = %s AND user2_id = %s)
+        """, (user1_id, user2_id, user2_id, user1_id))
+        conversation = cursor.fetchone()
+        if conversation:
+            conversation_id = conversation[0]
+        else:
+            cursor.execute("""INSERT INTO conversations (user1_id, user2_id)
+                VALUES (LEAST(%s, %s), GREATEST(%s, %s))
+            """, (user1_id, user2_id, user1_id, user2_id))
+            connection.commit()
+            conversation_id = cursor.lastrowid
+        cursor.close()
+        connection.close()
+        return jsonify({"conversation_id": conversation_id}), 201
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+@socketio.on('join')
+def join_conversation(data):
+    conversation_id = data.get('conversation_id')
+    join_room(str(conversation_id))
+    send(f"User joined conversation {conversation_id}", to=str(conversation_id))
+
 @app.route('/api/user/profile', methods=['GET'])
 def get_user_profile():
     if 'user_id' not in session:
-        return jsonify({"message": "Unauthorized"}), 401
+        return jsonify({"message": "Unauthorized by session"}), 401
     user_id = session['user_id']
     try:
         connection = mysql.connector.connect(**db_config)
@@ -28,7 +92,7 @@ def get_user_profile():
         user = cursor.fetchone()
         return jsonify(user), 200
     except mysql.connector.Error as err:
-        return jsonify({"error": str(err)}), 500
+        return jsonify({"error": str(err)+"mysql error"}), 500
     finally:
         if cursor:
             cursor.close()
