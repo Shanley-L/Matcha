@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     height INT,
     bio TEXT,
     birthdate DATE,
-    age INT NOT NULL,
+    age INT NOT NULL DEFAULT 18,
     profile_picture VARCHAR(255),
     interests TEXT,
     is_email_verified BOOLEAN DEFAULT FALSE,

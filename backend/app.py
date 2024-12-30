@@ -118,7 +118,6 @@ def login():
         cursor = connection.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
-        print("test")
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             return jsonify({"message": session}), 200
@@ -139,8 +138,7 @@ def register():
     try:
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
-        cursor.execute("INSERT INTO users (username, email, password) VALUES (%s, %s, %s)",
-                       (data['name'], data['email'], hashed_password))
+        print("data['username']")
         connection.commit()
         cursor.close()
         connection.close()
