@@ -1,4 +1,7 @@
+version: '3.8'
+
 services:
+
   # Backend - Flask
   backend:
     build:
@@ -32,18 +35,18 @@ services:
     networks:
       - m-network-front
 
-  # Base de Données - MySQL
-      # - db_data:/var/lib/mysql
+  # Base de Données - MariaDB
   mariadb:
     image: mariadb:latest
+    container_name: mariadb
     env_file: .env
     volumes: 
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql  # Using the external volume for persistence
     ports:
       - "3306:3306"
     networks:
       - m-network-back
-
 
   # Serveur Web - Nginx
   nginx:
@@ -54,9 +57,9 @@ services:
     container_name: matcha_nginx
     env_file: .env
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf # Fichier de config Nginx
-      - ./frontend/build:/var/www/html/frontend # Frontend en mode production
-      - ./backend/public:/var/www/html/backend # Point d'entrée pour Flask
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend/build:/var/www/html/frontend
+      - ./backend/public:/var/www/html/backend
     ports:
       - "8080:80"
     depends_on:
@@ -71,3 +74,4 @@ networks:
 
 volumes:
   db_data:
+    external: true  # This makes the volume external so Matcha-Analytics can also access it
