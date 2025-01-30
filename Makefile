@@ -4,6 +4,8 @@ re: down run
 
 run :
 	@echo "Building and running the app"
+	# mkdir ./frontend/build
+	# mkdir ./backend/src
 	docker compose up --build
 
 down :
