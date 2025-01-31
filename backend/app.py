@@ -138,11 +138,14 @@ def register():
     try:
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
-        print("data['username']")
+        sql = "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)"
+        values = (data['username'], data['email'], hashed_password)
+
+        cursor.execute(sql, values)
         connection.commit()
         cursor.close()
         connection.close()
-        return jsonify({"message": "User registered successfully!"})
+        return jsonify({"message": "User registered successfully!"}), 201
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
 

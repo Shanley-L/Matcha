@@ -16,4 +16,8 @@ clean: down
 	@echo "Cleaning up"
 	docker system prune -af
 
+cleandb:
+	@echo "Wiping DB"
+	docker volume rm db_data
+
 .PHONY: all setup run down
