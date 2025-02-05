@@ -8,7 +8,7 @@ COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./frontend/build /var/www/html/frontend
 
 # backend public (Symfony)
-COPY ./backend/src /var/www/html/backend
+COPY ./backend/ /var/www/html/backend
 
 # port par défaut de Nginx
 EXPOSE 80
