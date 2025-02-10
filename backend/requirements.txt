@@ -1,9 +1,10 @@
 Flask==3.0.0
 Flask-RESTful==0.3.10
-Flask-SQLAlchemy==3.1.1
 Flask-SocketIO==5.3.4
 eventlet==0.33.3
 mysql-connector-python==8.1.0
 Werkzeug==3.0.1
 python-dotenv==1.0.0
 flask-cors==4.0.0
+flask_mail==0.10.0
+itsdangerous==2.2.0

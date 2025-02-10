@@ -1,5 +1,6 @@
 import mysql.connector
 from config.database import db_config
+from common_imports import jsonify
 
 class UserModel:
     @staticmethod
@@ -40,7 +41,7 @@ class UserModel:
     def create(name, email, password):
         try:
             connection = mysql.connector.connect(**db_config)
-            cursor = connection.cursor()
+            cursor = connection.cursor(dictionary=True)
             sql = "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)"
             cursor.execute(sql, (name, email, password))
             connection.commit()
@@ -49,6 +50,25 @@ class UserModel:
         except mysql.connector.Error as err:
             print("Database error:", err)
             return None
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+    @staticmethod
+    def verified(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("UPDATE users SET is_email_verified = 1 WHERE id = %s", (user_id,))
+            connection.commit()
+            if cursor.rowcount > 0:
+                return jsonify({"message": "Email verified"}), 200
+            return jsonify({"message": "Email not verified"}), 400
+        except mysql.connector.Error as err:
+            logging.error("Database error:", err)
+            return jsonify({"message": "Email not verified"}), 400
         finally:
             if cursor:
                 cursor.close()

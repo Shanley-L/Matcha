@@ -1,4 +1,4 @@
-from flask import Blueprint
+from common_imports import Blueprint
 from controllers.user_ctrl import UserController
 
 user_bp = Blueprint('user_bp', __name__)

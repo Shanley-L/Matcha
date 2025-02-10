@@ -1,9 +1,23 @@
+import os
+from flask_mail import Mail
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587  # For TLS (use 465 for SSL)
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER')
+app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PWD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('EMAIL_USER')
+
+mail = Mail(app)
 CORS(app, supports_credentials=True)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
