@@ -47,11 +47,9 @@ class AuthController:
         if not data.get('name') or not data.get('email') or not data.get('password'):
             return jsonify({"message": "All fields are required"}), 400
         hashed_password = generate_password_hash(data['password'])
-        user_id = UserModel.create(data['name'], data['email'], hashed_password)
         username = data['name']
         email = data['email']
         password = data['password']
-        print("HOLLA")
 
         existing_user_email = UserModel.get_by_email(email)
         if existing_user_email:
