@@ -1,0 +1,13 @@
+#authButton {
+    width: 90%;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 30px;
+    background: linear-gradient(343deg, rgba(131,58,180,1) 0%, rgba(170,29,253,1) 50%);
+    color: white;
+    font-weight: 700;
+}
+
+#authButton:hover {
+    background: linear-gradient(343deg, rgba(170,29,253,1) 0%, rgba(131,58,180,1) 50%);
+}

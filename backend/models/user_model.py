@@ -20,6 +20,24 @@ class UserModel:
                 connection.close()
 
     @staticmethod
+    def get_by_nickname(username):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            return user
+        except mysql.connector.Error as err:
+            print("Database error:", err)
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+
+    @staticmethod
     def get_by_email(email):
         try:
             connection = mysql.connector.connect(**db_config)

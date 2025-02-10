@@ -55,7 +55,7 @@ services:
     env_file: .env
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./frontend/build:/var/www/html/frontend
+      - ./frontend:/var/www/html/frontend
       - ./backend/public:/var/www/html/backend
     ports:
       - "8080:80"

@@ -1,0 +1,76 @@
+/* RESET CSS - Normalisation des styles par défaut du navigateur */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Réinitialisation du comportement des liens */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Suppression du style de liste */
+ul, ol {
+  list-style: none;
+}
+
+/* Style de base pour le body */
+body {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: #ffffff;
+  color: #333;
+}
+
+/* Suppression des bordures sur les boutons et inputs */
+button, input, textarea {
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Assurer une meilleure accessibilité */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ajout d'une hauteur minimale pour les sections */
+section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Suppression du style des boutons */
+button {
+  background: none;
+  cursor: pointer;
+}
+
+/* Rendre les formulaires plus accessibles */
+input, textarea {
+  width: 100%;
+  padding: 8px;
+}
+
+/* Améliorer le style du scroll (optionnel) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -5,7 +5,7 @@ COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
 
 # frontend build (React)
 # COPY --from=build /app/build /usr/share/nginx/html #FOR PROD
-COPY ./frontend/build /var/www/html/frontend
+COPY ./frontend/ /var/www/html/frontend
 
 # backend public (Symfony)
 COPY ./backend/ /var/www/html/backend
