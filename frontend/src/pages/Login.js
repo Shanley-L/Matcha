@@ -45,13 +45,11 @@ const Login = () => {
                         <div id='email'>
                             <i className="fa-solid fa-envelope"></i>
                             <Field name="email" type="email" placeholder="Email" />
-                            {errors.email && touched.email ? <div className="error">{errors.email}</div> : null}
                         </div>
 
                         <div id='password'>
                             <i className="fa-solid fa-lock"></i>
                             <Field name="password" type="password" placeholder="Password" />
-                            {errors.password && touched.password ? <div className="error">{errors.password}</div> : null}
                         </div>
 
                         {errorMessage && <p className="error-message">{errorMessage}</p>}
