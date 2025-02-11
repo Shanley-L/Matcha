@@ -1,0 +1,131 @@
+.interests-container {
+    padding: 20px;
+    height: 100vh;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.interests-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    padding: 8px;
+    margin-right: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #333;
+}
+
+.interests-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.interests-description {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.interests-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.interest-btn {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 100px;
+    border: 2px solid #8B5CF6;
+    background: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #8B5CF6;
+    white-space: nowrap;
+}
+
+.interest-btn.selected {
+    background-color: #8B5CF6;
+    color: white;
+}
+
+.interest-btn:hover {
+    background-color: #f3f0ff;
+}
+
+.interest-btn.selected:hover {
+    background-color: #7c4ef3;
+}
+
+.interest-icon {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.continue-button {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 30px;
+    border: none;
+    background-color: #8B5CF6;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.continue-button:disabled {
+    background-color: #d1d1d1;
+    cursor: not-allowed;
+}
+
+/* Animation pour la sélection des intérêts */
+.interest-btn {
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+.interest-btn:active {
+    transform: scale(0.95);
+}
+
+/* Style pour le conteneur de défilement */
+.interests-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.interests-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.interests-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.interests-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.interests-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+} 
