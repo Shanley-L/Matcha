@@ -62,7 +62,7 @@ class AuthController:
         if not AuthController.is_password_strong(password):
             return jsonify({"message": "Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character"}), 400
 
-        hashed_password = generate_password_hash(password)
+        hashed_password = AuthController.generate_password_hash(password)
         user_id = UserModel.create(username, email, hashed_password)
         
         if user_id:
