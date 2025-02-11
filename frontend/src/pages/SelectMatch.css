@@ -1,0 +1,126 @@
+.match-container {
+    padding: 20px;
+    height: 100vh;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.match-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    padding: 8px;
+    margin-right: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #333;
+}
+
+.match-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.match-description {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.match-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.match-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    border-radius: 20px;
+    border: 2px solid #f0f0f0;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.match-card.selected {
+    border-color: #8B5CF6;
+}
+
+.match-icon-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #f8f5ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    font-size: 24px;
+    color: #8B5CF6;
+    transition: all 0.2s ease;
+}
+
+.match-card.selected .match-icon-container {
+    background-color: #8B5CF6;
+    color: white;
+}
+
+.match-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.continue-button {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 30px;
+    border: none;
+    background-color: #8B5CF6;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.continue-button:disabled {
+    background-color: #d1d1d1;
+    cursor: not-allowed;
+}
+
+/* Animation pour la sélection */
+.match-card {
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+.match-card:active {
+    transform: scale(0.98);
+}
+
+/* Hover effects */
+.match-card:hover:not(.selected) {
+    border-color: #e6e6e6;
+    background-color: #fafafa;
+}
+
+.match-card.selected:hover {
+    background-color: #fafafa;
+} 

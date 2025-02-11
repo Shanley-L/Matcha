@@ -18,15 +18,19 @@ const Login = () => {
 
     const handleSubmit = async (values) => {
         try {
-            const response = await axios.post('/api/auth/login', values); // Correct API endpoint
-            console.log(response.data);
-            alert("User logged in successfully");
-            navigate('/profile'); // Assuming the user is redirected to their profile after successful login
+            const response = await axios.post('/api/auth/login', values);
+            const { user } = response.data; // Supposons que l'API retourne un objet utilisateur
+            
+            if (user.is_first_login) {
+                navigate('/select-country'); // Première étape après la connexion
+            } else {
+                navigate('/profile');
+            }
         } catch (error) {
             console.log(error);
-            setErrorMessage("Invalid email or password"); // Set the error message to display
+            setErrorMessage("Invalid email or password");
         }
-    }
+    };
 
     return (
         <div id="auth-container">

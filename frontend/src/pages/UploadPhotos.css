@@ -1,0 +1,122 @@
+.photos-container {
+    padding: 20px;
+    height: 100vh;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+}
+
+.photos-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    padding: 8px;
+    margin-right: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #333;
+}
+
+.photos-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+
+.photos-description {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.photo-slot {
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.photo-slot.filled {
+    border: none;
+}
+
+.photo-slot.filled img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-slot.empty {
+    border: 2px dashed #8B5CF6;
+    background-color: #f8f5ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-photo-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #8B5CF6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.continue-button {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 30px;
+    border: none;
+    background-color: #8B5CF6;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.continue-button:disabled {
+    background-color: #d1d1d1;
+    cursor: not-allowed;
+}
+
+/* Hover effects */
+.photo-slot.empty:hover {
+    background-color: #f0e8ff;
+    border-color: #7c4ef3;
+}
+
+.photo-slot.empty:hover .add-photo-button {
+    background-color: #7c4ef3;
+}
+
+/* Animation pour le bouton d'ajout */
+.add-photo-button {
+    transform: scale(1);
+    transition: transform 0.2s ease;
+}
+
+.photo-slot.empty:active .add-photo-button {
+    transform: scale(0.95);
+} 

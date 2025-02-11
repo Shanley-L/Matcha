@@ -7,24 +7,20 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(50),
-    gender ENUM('male', 'female', 'non-binary', 'other') DEFAULT 'other',
-    sexual_orientation ENUM('heterosexual', 'homosexual', 'bisexual', 'other') DEFAULT 'other',
-    looking_for ENUM('friends', 'lovers', 'ons', 'i-dont-know', 'gaming friends') DEFAULT 'i-dont-know',
-    activ BOOLEAN DEFAULT FALSE,
-    height INT,
+    gender ENUM('male', 'female', 'other'),
+    sexual_orientation ENUM('male', 'female', 'other'),
     bio TEXT,
+    job VARCHAR(100),
     birthdate DATE,
-    age INT NOT NULL DEFAULT 18,
-    profile_picture VARCHAR(255),
-    interests TEXT,
-    is_email_verified BOOLEAN DEFAULT FALSE,
-    city TEXT,
-    latitude DECIMAL(9,6),
-    longitude DECIMAL(9,6),
+    country VARCHAR(100),
+    interests JSON, -- Stockage des intérêts en format JSON
+    is_first_login BOOLEAN DEFAULT TRUE,
+    photos JSON, -- Stockage des URLs/chemins des photos en JSON (maximum 4)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+/* La vérification de l'âge sera effectuée au niveau de l'application */
 
 CREATE TABLE IF NOT EXISTS user_interactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,7 +45,6 @@ CREATE TABLE IF NOT EXISTS conversations (
     FOREIGN KEY (user1_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (user2_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
 
 CREATE TABLE IF NOT EXISTS messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
