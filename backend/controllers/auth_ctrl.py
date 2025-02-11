@@ -70,7 +70,7 @@ class AuthController:
     @staticmethod
     def send_confirmation_email(user_email):
         token = AuthController.generate_confirmation_token(user_email)
-        confirm_url = url_for('auth_bp.confirm_email', token=token, _external=True)
+        confirm_url = f'http://localhost:3000/confirm/{token}'
         html = f'<p>Click the link to confirm your email: <a href="{confirm_url}">Confirm Email</a></p>'
         msg = Message(subject='Confirm Your Email',
                     recipients=[user_email],

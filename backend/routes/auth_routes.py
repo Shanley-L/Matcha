@@ -21,7 +21,9 @@ def logout():
 
 @auth_bp.route('/confirm/<token>')
 def confirm_email(token):
+    logging.error(f"Token: {token}")
     email = AuthController.confirm_token(token)
+    logging.error(f"Email: {email}")
     if email:
         user = UserModel.get_by_email(email)
         if not user['is_email_verified']:

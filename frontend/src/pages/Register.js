@@ -19,11 +19,8 @@ const Register = () => {
 
     const handleSubmit = async (values) => {
         try {
-            console.log("testing...");
-            const response = await axios.post('/api/auth/register', values);
-            console.log(response.data);
-            alert("User registered successfully");
-            navigate('/login');
+            await axios.post('/api/auth/register', values);
+            navigate('/unverified');
         } catch (error) {
             console.log(error);
             if (error.response && error.response.data) {
