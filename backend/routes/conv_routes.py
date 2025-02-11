@@ -1,4 +1,4 @@
-from common_imports import Blueprint
+from flask import Blueprint
 from controllers.conv_ctrl import ConversationController
 
 conv_bp = Blueprint('conv_bp', __name__)

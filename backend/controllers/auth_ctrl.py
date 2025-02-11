@@ -6,6 +6,7 @@ from models.user_model import UserModel
 from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask_mail import Message
 from app import app, mail 
+import logging
 
 s = Serializer(app.config['SECRET_KEY'])
 
@@ -31,10 +32,6 @@ class AuthController:
         user = UserModel.get_by_email(email)
         if not user['is_email_validated']:
             return jsonify({"message": "Email not verified"}), 401
-        if user and check_password_hash(user['password'], password):
-            session['user_id'] = user['id']
-            return jsonify({"message": "Login successful", "session": session}), 200
-        return jsonify({"message": "Invalid credentials"}), 401
         if user:
             if check_password_hash(user['password'], password):
                 session['user_id'] = user['id']
@@ -59,8 +56,8 @@ class AuthController:
         if existing_user_username:
             return jsonify({"message": "Username is already taken"}), 400
 
-        if not AuthController.is_password_strong(password):
-            return jsonify({"message": "Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character"}), 400
+        # if not AuthController.is_password_strong(password):
+        #     return jsonify({"message": "Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character"}), 400
 
         hashed_password = generate_password_hash(password)
         user_id = UserModel.create(username, email, hashed_password)
@@ -72,7 +69,7 @@ class AuthController:
 
     @staticmethod
     def send_confirmation_email(user_email):
-        token = generate_confirmation_token(user_email)
+        token = AuthController.generate_confirmation_token(user_email)
         confirm_url = url_for('auth_bp.confirm_email', token=token, _external=True)
         html = f'<p>Click the link to confirm your email: <a href="{confirm_url}">Confirm Email</a></p>'
         msg = Message(subject='Confirm Your Email',

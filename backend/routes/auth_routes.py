@@ -1,4 +1,4 @@
-from common_imports import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from controllers.auth_ctrl import AuthController
 from controllers.user_ctrl import UserModel
 import logging

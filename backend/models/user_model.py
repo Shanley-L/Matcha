@@ -1,6 +1,7 @@
 import mysql.connector
 from config.database import db_config
-from common_imports import jsonify
+from flask import jsonify
+import logging
 
 class UserModel:
     @staticmethod
@@ -47,12 +48,12 @@ class UserModel:
             user = cursor.fetchone()
             return user
         except mysql.connector.Error as err:
-            print("Database error:", err)
+            logging.error(f"Database error in get_by_email: {err}")
             return None
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
