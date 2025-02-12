@@ -21,6 +21,6 @@ cleandb:
 	docker volume rm db_data
 
 test:
-	@echo "Running tests"
+	@echo "Running tests 222"
 
 .PHONY: all setup run down
