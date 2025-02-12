@@ -40,7 +40,7 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT id, email, password FROM users WHERE username = %s", (username,))
             user = cursor.fetchone()
             return user
         except mysql.connector.Error as err:
@@ -58,7 +58,7 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            cursor.execute("SELECT id, email, password, is_first_login, is_email_verified FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
             return user
         except mysql.connector.Error as err:

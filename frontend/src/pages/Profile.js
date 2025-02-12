@@ -6,21 +6,37 @@ import '../styles/pages/shared.css';
 import '../styles/pages/Profile.css';
 
 const Profile = () => {
+    const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        const fetchUserProfile = async () => {
+        const loadProfile = async () => {
             try {
                 const response = await axios.get('/api/user/profile');
-                console.log(response.data);
                 setUser(response.data);
             } catch (error) {
-                console.error('Error fetching user profile:', error);
+                console.error('Error loading profile:', error);
+            } finally {
+                setLoading(false);
             }
         };
+        console.log("loadProfile");
+        loadProfile();
+    }, []); // Only run once when component mounts
 
-        fetchUserProfile();
-    }, []);
+    if (loading) {
+        return (
+            <div className="page-container">
+                <PageHeader />
+                <div className="content">
+                    <div className="profile-info">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+                <BottomNavBar />
+            </div>
+        );
+    }
 
     return (
         <div className="page-container">

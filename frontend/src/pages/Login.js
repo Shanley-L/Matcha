@@ -21,7 +21,9 @@ const Login = () => {
             const response = await axios.post('/api/auth/login', values);
             const { user } = response.data; // Supposons que l'API retourne un objet utilisateur
             
+            console.log("User: ", user);
             if (user.is_first_login) {
+                console.log("First login");
                 navigate('/select-country'); // Première étape après la connexion
             } else {
                 navigate('/profile');

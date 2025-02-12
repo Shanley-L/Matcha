@@ -31,7 +31,9 @@ def confirm_email(token):
     logging.error(f"Email: {email}")
     if email:
         user = UserModel.get_by_email(email)
+        logging.error(f"User: {user}")
         if not user['is_email_verified']:
+            logging.error("Verifying mail")
             return UserModel.verified(user['id'])  # Redirect to a profile page or home
         else:
             logging.error("Email verified")

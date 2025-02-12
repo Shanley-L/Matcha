@@ -9,6 +9,11 @@ user_bp = Blueprint('user', __name__)
 def get_user_profile():
     return UserController.get_user_profile()
 
+@user_bp.route('/profile/secure', methods=['GET'])
+@email_verified_required
+def get_user_profile_secure():
+    return UserController.get_user_profile_secure()
+
 @user_bp.route('/update', methods=['PUT'])
 @email_verified_required
 def update_user_profile():

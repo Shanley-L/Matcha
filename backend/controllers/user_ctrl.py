@@ -45,6 +45,16 @@ class UserController:
         return jsonify({"error": "User not found"}), 404
 
     @staticmethod
+    def get_user_profile_secure():
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized by session"}), 401
+
+        user = UserModel.get_by_id(session['user_id'])
+        if user:
+            return jsonify(user), 200
+        return jsonify({"error": "User not found"}), 404
+
+    @staticmethod
     def update_user_profile():
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized by session"}), 401
