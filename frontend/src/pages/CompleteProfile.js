@@ -7,7 +7,7 @@ import './CompleteProfile.css';
 
 const CompleteProfile = () => {
     const [formData, setFormData] = useState({
-        first_name: '',
+        firstname: '',
         gender: '',
         sexual_orientation: '',
         job: '',
@@ -43,10 +43,10 @@ const CompleteProfile = () => {
                 <div className="form-group">
                     <input
                         type="text"
-                        name="first_name"
+                        name="firstname"
                         placeholder="First Name"
                         className="form-input"
-                        value={formData.first_name}
+                        value={formData.firstname}
                         onChange={handleChange}
                     />
                 </div>

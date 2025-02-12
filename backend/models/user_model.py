@@ -2,6 +2,7 @@ import mysql.connector
 from config.database import db_config
 from flask import jsonify
 import logging
+import json
 
 class UserModel:
     @staticmethod
@@ -9,11 +10,24 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT id, username, email, created_at FROM users WHERE id = %s", (user_id,))
+            cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
+            birthdate, country, gender, sexual_orientation, interests, photos, match_type,\
+            job, bio, created_at FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
+            if user:
+                # Convert bytes to string for JSON fields
+                if user.get('interests') and isinstance(user['interests'], bytes):
+                    user['interests'] = json.loads(user['interests'].decode())
+                if user.get('photos') and isinstance(user['photos'], bytes):
+                    user['photos'] = json.loads(user['photos'].decode())
+                # Convert datetime objects to string
+                if user.get('birthdate'):
+                    user['birthdate'] = user['birthdate'].isoformat() if user['birthdate'] else None
+                if user.get('created_at'):
+                    user['created_at'] = user['created_at'].isoformat() if user['created_at'] else None
             return user
         except mysql.connector.Error as err:
-            print("Database error:", err)
+            logging.error(f"Database error in get_by_id: {err}")
             return None
         finally:
             if cursor:
@@ -86,7 +100,7 @@ class UserModel:
             params = []
 
             if firstname:
-                update_fields.append("first_name = %s")
+                update_fields.append("firstname = %s")
                 params.append(firstname)
             if birthdate:
                 update_fields.append("birthdate = %s")

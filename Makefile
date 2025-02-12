@@ -10,7 +10,7 @@ run :
 
 down :
 	@echo "Stopping the app"
-	docker compose down
+	docker compose down -v
 
 clean: down
 	@echo "Cleaning up"

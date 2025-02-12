@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(50),
+    firstname VARCHAR(50),
     gender ENUM('male', 'female', 'other'),
     sexual_orientation ENUM('male', 'female', 'other'),
     bio TEXT,
@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     country VARCHAR(100),
     interests JSON, -- Stockage des intérêts en format JSON
     is_first_login BOOLEAN DEFAULT TRUE,
+    is_email_verified BOOLEAN DEFAULT FALSE,
     photos JSON, -- Stockage des URLs/chemins des photos en JSON (maximum 4)
     match_type ENUM('love', 'friends', 'fling', 'business'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 /* Insertion des utilisateurs avec leurs photos */
-INSERT INTO users (username, email, password, first_name, gender, sexual_orientation, bio, job, birthdate, country, interests, is_first_login, photos, match_type) VALUES
+INSERT INTO users (username, email, password, firstname, gender, sexual_orientation, bio, job, birthdate, country, interests, is_first_login, photos, match_type) VALUES
     ('sebastien', 'sebastien@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sebastien', 'male', 'female', 'Passionné de photographie et de voyages. Amateur de bons vins et de cuisine française.', 'Photographe', '1990-05-15', 'France', '["photography", "travel_places", "food_drink"]', false, '["/initUser/sebastien.jpeg"]', 'love'),
     
     ('elise', 'elise@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Elise', 'female', 'male', 'Artiste dans l''âme, je peins et dessine. Je cherche à partager ma passion pour l''art.', 'Artiste Peintre', '1993-08-22', 'France', '["art", "painting", "nature_plant"]', false, '["/initUser/elise.jpeg"]', 'friends'),
@@ -33,7 +34,7 @@ INSERT INTO users (username, email, password, first_name, gender, sexual_orienta
     
     ('francois', 'francois@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Francois', 'male', 'female', 'Chef cuisinier, amateur de gastronomie et de vins. Je voyage pour découvrir de nouvelles saveurs.', 'Chef Cuisinier', '1988-07-19', 'France', '["food_drink", "travel_places", "photography"]', false, '["/initUser/francois.jpeg"]', 'love'),
     
-    ('shanley', 'shanley@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Shanley', 'female', 'male', 'Développeuse web, geek et fière de l''être. Fan de jeux vidéo et de nouvelles technologies.', 'Développeuse Full-Stack', '1995-01-25', 'United States', '["gaming", "technology", "movie"]', false, '["/initUser/shanley.jpeg"]', 'business'),
+    ('shanley', 'shanley@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Shanley', 'male', 'female', 'Développeur web, geek et fière de l''être. Fan de jeux vidéo et de nouvelles technologies.', 'Développeur Full-Stack', '1995-01-25', 'United States', '["gaming", "technology", "movie"]', false, '["/initUser/shanley.jpeg"]', 'business'),
     
     ('anissa', 'anissa@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Anissa', 'female', 'male', 'Danseuse professionnelle. La musique est ma vie, la danse est ma passion.', 'Danseuse', '1992-09-08', 'Morocco', '["dancing_singing", "music", "fashion"]', false, '["/initUser/anissa.jpeg"]', 'fling'),
     

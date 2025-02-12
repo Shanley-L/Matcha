@@ -29,7 +29,7 @@ const SelectMatch = () => {
             
             // Mapping des noms de champs entre le frontend et le backend
             const fieldMapping = {
-                first_name: 'firstname',
+                firstname: 'firstname',
                 matchType: 'matchType',
                 birthdate: 'birthdate',
                 country: 'country',

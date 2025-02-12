@@ -1,4 +1,26 @@
 /* Profile page specific styles */
 .profile-content {
     /* Add any Profile-specific styles here */
+}
+
+.profile-info {
+    width: 100%;
+    padding: 20px;
+    margin-top: 60px;
+    text-align: center;
+}
+
+.profile-info h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    background: linear-gradient(343deg, rgba(131,58,180,1) 0%, rgba(170,29,253,1) 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.profile-info p {
+    color: #666;
+    font-size: 16px;
 } 
