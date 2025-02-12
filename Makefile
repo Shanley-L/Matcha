@@ -20,4 +20,7 @@ cleandb:
 	@echo "Wiping DB"
 	docker volume rm db_data
 
+test:
+	@echo "Running tests"
+
 .PHONY: all setup run down
