@@ -76,7 +76,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, username=None, email=None, password=None, first_name=None, gender=None, sexual_orientation=None, looking_for=None, bio=None, birthdate=None, city=None, interests=None):
+    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, sexual_orientation=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -85,43 +85,43 @@ class UserModel:
             update_fields = []
             params = []
 
-            if username:
-                update_fields.append("username = %s")
-                params.append(username)
-            if email:
-                update_fields.append("email = %s")
-                params.append(email)
-            if password:
-                update_fields.append("password = %s")
-                params.append(password)
-            if first_name:
+            if firstname:
                 update_fields.append("first_name = %s")
-                params.append(first_name)
+                params.append(firstname)
+            if birthdate:
+                update_fields.append("birthdate = %s")
+                params.append(birthdate)
+            if country:
+                update_fields.append("country = %s")
+                params.append(country)
             if gender:
                 update_fields.append("gender = %s")
                 params.append(gender)
             if sexual_orientation:
                 update_fields.append("sexual_orientation = %s")
                 params.append(sexual_orientation)
-            if looking_for:
-                update_fields.append("looking_for = %s")
-                params.append(looking_for)
-            if bio:
-                update_fields.append("bio = %s")
-                params.append(bio)
-            if birthdate:
-                update_fields.append("birthdate = %s")
-                params.append(birthdate)
-            if city:
-                update_fields.append("city = %s")
-                params.append(city)
             if interests:
                 update_fields.append("interests = %s")
                 params.append(interests)
+            if photos:
+                update_fields.append("photos = %s")
+                params.append(photos)
+            if matchType:
+                update_fields.append("match_type = %s")
+                params.append(matchType)
+            if is_first_login is not None:
+                update_fields.append("is_first_login = %s")
+                params.append(is_first_login)
+            if job:
+                update_fields.append("job = %s")
+                params.append(job)
+            if bio:
+                update_fields.append("bio = %s")
+                params.append(bio)
 
-            # If no field is provided for update, return None
+            # If no field is provided for update, return error
             if not update_fields:
-                return None
+                return None, "No fields to update"
 
             # Construct the SQL query to update the user
             sql = f"UPDATE users SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
@@ -131,11 +131,19 @@ class UserModel:
             connection.commit()
 
             if cursor.rowcount > 0:
-                return user_id
-            return None
+                return user_id, None
+            return None, "No rows affected"
+
         except mysql.connector.Error as err:
-            print("Database error:", err)
-            return None
+            error_msg = str(err)
+            if err.errno == 1265:  # Code d'erreur pour une valeur enum invalide
+                return None, f"Invalid value for enum field: {error_msg}"
+            elif err.errno == 1292:  # Code d'erreur pour un format de date invalide
+                return None, f"Invalid date format: {error_msg}"
+            elif err.errno == 1366:  # Code d'erreur pour une valeur incorrecte
+                return None, f"Incorrect value format: {error_msg}"
+            else:
+                return None, f"Database error: {error_msg}"
         finally:
             if cursor:
                 cursor.close()

@@ -22,6 +22,10 @@ CORS(app, supports_credentials=True)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# Configuration pour les fichiers statiques
+app.static_folder = 'assets'
+app.static_url_path = '/assets'
+
 from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
 from routes.conv_routes import conv_bp
@@ -54,4 +58,6 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
+    # Créer le dossier assets/usersPictures s'il n'existe pas
+    os.makedirs('assets/usersPictures', exist_ok=True)
     socketio.run(app, debug=True, host='0.0.0.0')

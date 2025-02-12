@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useUser } from '../context/UserContext'; // Importer le hook pour accéder au contexte
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack, IoAdd } from 'react-icons/io5';
+import axios from '../config/axios';
 import './UploadPhotos.css';
 
 const MAX_PHOTOS = 4;
@@ -20,16 +21,63 @@ const UploadPhotos = () => {
         }
         
         const newPhotos = files.map(file => ({
-            url: URL.createObjectURL(file),
-            file: file
+            file: file,
+            preview: URL.createObjectURL(file)
         }));
         
         setPhotos([...photos, ...newPhotos]);
     };
 
-    const handleSubmit = () => {
-        setUserData({ ...userData, photos }); // Ajouter les photos au contexte
-        navigate('/select-interests'); // Redirection vers la page des intérêts
+    const handleSubmit = async () => {
+        try {
+            const formData = new FormData();
+
+            // Ajouter chaque photo au formData
+            photos.forEach(photo => {
+                formData.append('photos', photo.file);
+            });
+
+            // Ajouter les autres données du contexte utilisateur
+            Object.keys(userData).forEach(key => {
+                if (userData[key] !== null && userData[key] !== undefined && key !== 'photos') {
+                    if (Array.isArray(userData[key]) || typeof userData[key] === 'object') {
+                        formData.append(key, JSON.stringify(userData[key]));
+                    } else {
+                        formData.append(key, userData[key].toString());
+                    }
+                }
+            });
+
+            // Log des données envoyées
+            console.log('FormData content:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            // Envoyer les données au backend
+            const response = await axios.put('/api/user/update', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (response.status === 200) {
+                // Mettre à jour le contexte avec les chemins des photos retournés par le backend
+                setUserData({ ...userData, photos: response.data.photos });
+                navigate('/select-interests');
+            }
+        } catch (error) {
+            console.error('Error uploading photos:', error.response?.data || error);
+            alert('Failed to upload photos. Please try again.');
+        }
+    };
+
+    const removePhoto = (index) => {
+        const newPhotos = [...photos];
+        // Libérer l'URL de prévisualisation
+        URL.revokeObjectURL(newPhotos[index].preview);
+        newPhotos.splice(index, 1);
+        setPhotos(newPhotos);
     };
 
     const renderPhotoSlots = () => {
@@ -38,7 +86,14 @@ const UploadPhotos = () => {
             if (photos[i]) {
                 slots.push(
                     <div key={i} className="photo-slot filled">
-                        <img src={photos[i].url} alt={`Upload ${i + 1}`} />
+                        <img src={photos[i].preview} alt={`Upload ${i + 1}`} />
+                        <button 
+                            className="remove-photo" 
+                            onClick={() => removePhoto(i)}
+                            type="button"
+                        >
+                            ×
+                        </button>
                     </div>
                 );
             } else {

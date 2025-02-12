@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     interests JSON, -- Stockage des intérêts en format JSON
     is_first_login BOOLEAN DEFAULT TRUE,
     photos JSON, -- Stockage des URLs/chemins des photos en JSON (maximum 4)
+    match_type ENUM('love', 'friends', 'fling', 'business'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -20,13 +20,54 @@ const SelectMatch = () => {
 
     const handleNext = async () => {
         if (selectedMatch) {
-            // Ajouter le match sélectionné aux données utilisateur
-            const updatedData = { ...userData, matchType: selectedMatch };
-            setUserData(updatedData); // Mettre à jour l'état global avec le nouveau match
+            // Mettre à jour le contexte utilisateur
+            const updatedUserData = { ...userData, matchType: selectedMatch };
+            setUserData(updatedUserData);
+
+            // Créer un FormData et ajouter le match sélectionné
+            const formData = new FormData();
+            
+            // Mapping des noms de champs entre le frontend et le backend
+            const fieldMapping = {
+                first_name: 'firstname',
+                matchType: 'matchType',
+                birthdate: 'birthdate',
+                country: 'country',
+                gender: 'gender',
+                sexual_orientation: 'sexual_orientation',
+                interests: 'interests',
+                job: 'job',
+                bio: 'bio',
+                is_first_login: 'is_first_login'
+            };
+
+            // Ajouter les données utilisateur au FormData avec le bon mapping
+            Object.keys(updatedUserData).forEach(key => {
+                const backendKey = fieldMapping[key] || key;
+                const value = updatedUserData[key];
+
+                if (value !== null && value !== undefined && value !== '' && key !== 'photos') {
+                    if (Array.isArray(value) || typeof value === 'object') {
+                        formData.append(backendKey, JSON.stringify(value));
+                    } else {
+                        formData.append(backendKey, value.toString());
+                    }
+                }
+            });
+
+            // Log des données envoyées
+            console.log('FormData content:');
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
 
             // Sauvegarder dans le backend
             try {
-                const response = await axios.put('/api/user/update', updatedData);
+                const response = await axios.put('/api/user/update', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
                 console.log('Données envoyées:', response.data);
 
                 navigate('/home'); // Redirection après succès

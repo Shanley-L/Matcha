@@ -6,13 +6,26 @@ import { IoChevronBack, IoSearch } from 'react-icons/io5';
 import './SelectCountry.css';
 
 const countries = [
-    { code: 'AF', name: 'Afghanistan' },
-    { code: 'AL', name: 'Albania' },
-    { code: 'DZ', name: 'Algeria' },
-    { code: 'AD', name: 'Andorra' },
-    { code: 'AO', name: 'Angola' },
-    { code: 'AR', name: 'Argentina' },
-    // Add more countries as needed
+    { code: 'US', name: 'United States' },
+    { code: 'CN', name: 'China' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'IN', name: 'India' },
+    { code: 'FR', name: 'France' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'KR', name: 'South Korea' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'ID', name: 'Indonesia' },
+    { code: 'SA', name: 'Saudi Arabia' },
+    { code: 'NL', name: 'Netherlands' },
+    { code: 'CH', name: 'Switzerland' },
+    { code: 'TR', name: 'Turkey' },
+    { code: 'SE', name: 'Sweden' }
 ];
 
 const SelectCountry = () => {

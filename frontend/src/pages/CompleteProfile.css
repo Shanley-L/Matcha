@@ -52,6 +52,34 @@
     color: #333;
 }
 
+/* Style pour le champ de date */
+input[type="date"].form-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 40px;
+    position: relative;
+}
+
+input[type="date"].form-input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    filter: invert(0.5);
+}
+
+input[type="date"].form-input::-webkit-datetime-edit-text,
+input[type="date"].form-input::-webkit-datetime-edit-month-field,
+input[type="date"].form-input::-webkit-datetime-edit-day-field,
+input[type="date"].form-input::-webkit-datetime-edit-year-field {
+    color: #333;
+}
+
+input[type="date"].form-input::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+
 .form-input::placeholder {
     color: #999;
 }

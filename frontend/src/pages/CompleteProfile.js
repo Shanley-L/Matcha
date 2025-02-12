@@ -11,7 +11,8 @@ const CompleteProfile = () => {
         gender: '',
         sexual_orientation: '',
         job: '',
-        bio: ''
+        bio: '',
+        birthdate: ''
     });
     const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
@@ -78,6 +79,18 @@ const CompleteProfile = () => {
                         <option value="other">Other</option>
                     </select>
                     <IoChevronDown className="input-icon" />
+                </div>
+
+                <div className="form-group">
+                    <input
+                        type="date"
+                        name="birthdate"
+                        placeholder="Birthdate"
+                        className="form-input"
+                        value={formData.birthdate}
+                        onChange={handleChange}
+                        max={new Date().toISOString().split('T')[0]}
+                    />
                 </div>
 
                 <div className="form-group">
