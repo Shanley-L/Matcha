@@ -30,8 +30,6 @@ class AuthController:
         if not email or not password:
             return jsonify({"message": "Email and password are required"}), 400
         user = UserModel.get_by_email(email)
-        # if not user['is_email_validated']:
-        #     return jsonify({"message": "Email not verified"}), 401
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
             return jsonify({"message": "Login successful", "user": user}), 200
@@ -74,7 +72,7 @@ class AuthController:
                     recipients=[user_email],
                     html=html)
         try:
-            logging.error("Sending confirmation email")
+            logging.info("Sending confirmation email")
             return mail.send(msg)
         except Exception as e:
             print(f"Error sending email: {e}")

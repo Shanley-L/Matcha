@@ -34,7 +34,7 @@ const SelectMatch = () => {
                 birthdate: 'birthdate',
                 country: 'country',
                 gender: 'gender',
-                sexual_orientation: 'sexual_orientation',
+                looking_for: 'looking_for',
                 interests: 'interests',
                 job: 'job',
                 bio: 'bio',
@@ -54,14 +54,10 @@ const SelectMatch = () => {
                     }
                 }
             });
-
-            // Log des données envoyées
             console.log('FormData content:');
             for (let pair of formData.entries()) {
                 console.log(pair[0] + ': ' + pair[1]);
             }
-
-            // Sauvegarder dans le backend
             try {
                 const response = await axios.put('/api/user/update', formData, {
                     headers: {
@@ -69,8 +65,7 @@ const SelectMatch = () => {
                     }
                 });
                 console.log('Données envoyées:', response.data);
-
-                navigate('/home'); // Redirection après succès
+                navigate('/home');
             } catch (error) {
                 console.error('Erreur lors de l\'envoi des données:', error);
             }

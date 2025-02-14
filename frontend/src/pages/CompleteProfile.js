@@ -9,7 +9,7 @@ const CompleteProfile = () => {
     const [formData, setFormData] = useState({
         firstname: '',
         gender: '',
-        sexual_orientation: '',
+        looking_for: '',
         job: '',
         bio: '',
         birthdate: ''
@@ -68,9 +68,9 @@ const CompleteProfile = () => {
 
                 <div className="form-group">
                     <select
-                        name="sexual_orientation"
+                        name="looking_for"
                         className="form-input gender-select"
-                        value={formData.sexual_orientation}
+                        value={formData.looking_for}
                         onChange={handleChange}
                     >
                         <option value="">Sexual Orientation</option>

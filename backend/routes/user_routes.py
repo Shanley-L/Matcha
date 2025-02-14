@@ -18,3 +18,15 @@ def get_user_profile_secure():
 @email_verified_required
 def update_user_profile():
     return UserController.update_user_profile()
+
+@user_bp.route('/matches', methods=['GET'])
+def get_potential_matches():
+    return UserController.get_potential_matches()
+
+@user_bp.route('/like/<int:liked_user_id>', methods=['POST'])
+def like_user(liked_user_id):
+    return UserController.like_user(liked_user_id)
+
+@user_bp.route('/dislike/<int:disliked_user_id>', methods=['POST'])
+def dislike_user(disliked_user_id):
+    return UserController.dislike_user(disliked_user_id)

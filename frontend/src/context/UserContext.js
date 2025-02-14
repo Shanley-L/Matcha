@@ -14,7 +14,7 @@ export const UserProvider = ({ children }) => {
         birthdate: '',
         country: '',
         gender: '',
-        sexual_orientation: '',
+        looking_for: '',
         interests: [],
         photos: [],
         matchType: '',

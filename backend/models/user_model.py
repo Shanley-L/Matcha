@@ -11,7 +11,7 @@ class UserModel:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
-            birthdate, country, gender, sexual_orientation, interests, photos, match_type,\
+            birthdate, country, gender, looking_for, interests, photos, match_type,\
             job, bio, created_at FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
@@ -90,7 +90,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, sexual_orientation=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None):
+    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -111,9 +111,9 @@ class UserModel:
             if gender:
                 update_fields.append("gender = %s")
                 params.append(gender)
-            if sexual_orientation:
-                update_fields.append("sexual_orientation = %s")
-                params.append(sexual_orientation)
+            if looking_for:
+                update_fields.append("looking_for = %s")
+                params.append(looking_for)
             if interests:
                 update_fields.append("interests = %s")
                 params.append(interests)
@@ -177,6 +177,148 @@ class UserModel:
         except mysql.connector.Error as err:
             logging.error("Database error:", err)
             return jsonify({"message": "Email not verified"}), 400
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+    @staticmethod
+    def create_interaction(user_id, target_user_id, interaction_type):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # Insert or update the interaction
+            query = """
+                INSERT INTO user_interactions (user_id, target_user_id, interaction_type)
+                VALUES (%s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                    interaction_type = VALUES(interaction_type),
+                    updated_at = CURRENT_TIMESTAMP
+            """
+            cursor.execute(query, (user_id, target_user_id, interaction_type))
+            connection.commit()
+            
+            return True
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in create_interaction: {err}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+    @staticmethod
+    def check_match(user1_id, user2_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # Check if both users have liked each other
+            query = """
+                SELECT COUNT(*) as match_count
+                FROM user_interactions u1
+                JOIN user_interactions u2 ON u1.user_id = u2.target_user_id 
+                    AND u1.target_user_id = u2.user_id
+                WHERE u1.user_id = %s 
+                    AND u1.target_user_id = %s
+                    AND u1.interaction_type = 'like'
+                    AND u2.interaction_type = 'like'
+            """
+            cursor.execute(query, (user1_id, user2_id))
+            result = cursor.fetchone()
+            
+            return result[0] > 0
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in check_match: {err}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+    @staticmethod
+    def get_potential_matches(current_user_id, limit=10):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT gender, looking_for, interests 
+                FROM users 
+                WHERE id = %s
+            """, (current_user_id,))
+            current_user = cursor.fetchone()
+            if not current_user:
+                logging.error("Current user not found")
+                return []
+            # Parse current user's interests
+            current_user_interests = []
+            if current_user.get('interests'):
+                if isinstance(current_user['interests'], bytes):
+                    current_user_interests = json.loads(current_user['interests'].decode())
+                elif isinstance(current_user['interests'], str):
+                    current_user_interests = json.loads(current_user['interests'])
+                else:
+                    current_user_interests = current_user['interests']
+            # Build the gender filter based on sexual orientation
+            gender_condition = ""
+            if current_user['looking_for'] == 'male':
+                gender_condition = "AND gender = 'male'"
+            elif current_user['looking_for'] == 'female':
+                gender_condition = "AND gender = 'female'"
+            # Get users that haven't been interacted with by the current user
+            query = f"""
+                SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests
+                FROM users
+                WHERE id != %s
+                {gender_condition}
+                AND id NOT IN (
+                    SELECT target_user_id 
+                    FROM user_interactions 
+                    WHERE user_id = %s
+                )
+            """
+            cursor.execute(query, (current_user_id, current_user_id))
+            matches = cursor.fetchall()
+            # Process the results and calculate match scores
+            processed_matches = []
+            for match in matches:
+                processed_match = {}
+                # Process dates and photos
+                for key, value in match.items():
+                    if key == 'birthdate' and value:
+                        processed_match[key] = value.isoformat()
+                    elif key == 'photos' and value and isinstance(value, bytes):
+                        processed_match[key] = json.loads(value.decode())
+                    elif key == 'interests' and value:
+                        if isinstance(value, bytes):
+                            processed_match[key] = json.loads(value.decode())
+                        elif isinstance(value, str):
+                            processed_match[key] = json.loads(value)
+                        else:
+                            processed_match[key] = value
+                    else:
+                        processed_match[key] = value
+                # Calculate interest match score
+                match_score = 0
+                if processed_match.get('interests'):
+                    match_interests = processed_match['interests']
+                    # Calculate score based on common interests
+                    common_interests = set(current_user_interests) & set(match_interests)
+                    match_score = len(common_interests)
+                processed_match['match_score'] = match_score
+                processed_matches.append(processed_match)
+            processed_matches.sort(key=lambda x: x['match_score'], reverse=True)
+            return processed_matches[:limit]
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_potential_matches: {err}")
+            return []
         finally:
             if cursor:
                 cursor.close()

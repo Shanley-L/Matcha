@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     firstname VARCHAR(50),
     gender ENUM('male', 'female', 'other'),
-    sexual_orientation ENUM('male', 'female', 'other'),
+    looking_for ENUM('male', 'female', 'other'),
     bio TEXT,
     job VARCHAR(100),
     birthdate DATE,
@@ -17,34 +17,24 @@ CREATE TABLE IF NOT EXISTS users (
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,
     photos JSON, -- Stockage des URLs/chemins des photos en JSON (maximum 4)
+    match_score INT DEFAULT 0,
     match_type ENUM('love', 'friends', 'fling', 'business'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 /* Insertion des utilisateurs avec leurs photos */
-INSERT INTO users (username, email, password, firstname, gender, sexual_orientation, bio, job, birthdate, country, interests, is_first_login, photos, match_type) VALUES
-    ('sebastien', 'sebastien@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sebastien', 'male', 'female', 'Passionné de photographie et de voyages. Amateur de bons vins et de cuisine française.', 'Photographe', '1990-05-15', 'France', '["photography", "travel_places", "food_drink"]', false, '["/initUser/sebastien.jpeg"]', 'love'),
-    
-    ('elise', 'elise@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Elise', 'female', 'male', 'Artiste dans l''âme, je peins et dessine. Je cherche à partager ma passion pour l''art.', 'Artiste Peintre', '1993-08-22', 'France', '["art", "painting", "nature_plant"]', false, '["/initUser/elise.jpeg"]', 'friends'),
-    
-    ('sarah', 'sarah@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sarah', 'female', 'male', 'Yoga instructor cherchant à partager bien-être et spiritualité.', 'Professeur de Yoga', '1991-03-12', 'United States', '["gym_fitness", "nature_plant", "people_society"]', false, '["/initUser/sarah.jpeg"]', 'love'),
-    
-    ('charlotte', 'charlotte@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Charlotte', 'female', 'male', 'Passionnée de littérature et de théâtre. J''aime les longues discussions autour d''un café.', 'Libraire', '1994-11-30', 'France', '["book_novel", "writing", "art"]', false, '["/initUser/charlotte.jpeg"]', 'friends'),
-    
-    ('francois', 'francois@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Francois', 'male', 'female', 'Chef cuisinier, amateur de gastronomie et de vins. Je voyage pour découvrir de nouvelles saveurs.', 'Chef Cuisinier', '1988-07-19', 'France', '["food_drink", "travel_places", "photography"]', false, '["/initUser/francois.jpeg"]', 'love'),
-    
-    ('shanley', 'shanley@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Shanley', 'male', 'female', 'Développeur web, geek et fière de l''être. Fan de jeux vidéo et de nouvelles technologies.', 'Développeur Full-Stack', '1995-01-25', 'United States', '["gaming", "technology", "movie"]', false, '["/initUser/shanley.jpeg"]', 'business'),
-    
-    ('anissa', 'anissa@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Anissa', 'female', 'male', 'Danseuse professionnelle. La musique est ma vie, la danse est ma passion.', 'Danseuse', '1992-09-08', 'Morocco', '["dancing_singing", "music", "fashion"]', false, '["/initUser/anissa.jpeg"]', 'fling'),
-    
-    ('mehdi', 'mehdi@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Mehdi', 'male', 'female', 'Architecte passionné par le design et l''art moderne. Amateur de photographie urbaine.', 'Architecte', '1989-04-17', 'France', '["architecture", "photography", "art"]', false, '["/initUser/mehdi.jpeg"]', 'business'),
-    
-    ('carol', 'carol@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Carol', 'female', 'male', 'Vétérinaire et amoureuse des animaux. Je voyage dès que possible pour découvrir la faune mondiale.', 'Vétérinaire', '1993-12-05', 'United Kingdom', '["animals", "nature_plant", "travel_places"]', false, '["/initUser/carol.jpeg"]', 'love'),
-    
-    ('annie', 'annie@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Annie', 'female', 'male', 'Professeure de langues, polyglotte. J''adore découvrir de nouvelles cultures et voyager.', 'Professeure', '1990-10-14', 'Canada', '["language", "travel_places", "people_society"]', false, '["/initUser/annie.jpeg"]', 'friends');
-
-/* La vérification de l'âge sera effectuée au niveau de l'application */
+INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, interests, is_first_login, photos, match_type) VALUES
+    ('sebastien', 'sebastien@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sebastien', 'male', 'female', 'Passionné de photographie et de voyages. Amateur de bons vins et de cuisine française.', 'Photographe', '1990-05-15', 'France', '["photography", "travel_places", "food_drink"]', false, '["/init/sebastien.jpeg"]', 'love'),
+    ('elise', 'elise@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Elise', 'female', 'male', 'Artiste dans l''âme, je peins et dessine. Je cherche à partager ma passion pour l''art.', 'Artiste Peintre', '1993-08-22', 'France', '["art", "painting", "nature_plant"]', false, '["/init/elise.jpeg"]', 'friends'),
+    ('sarah', 'sarah@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sarah', 'female', 'male', 'Yoga instructor cherchant à partager bien-être et spiritualité.', 'Professeur de Yoga', '1991-03-12', 'United States', '["gym_fitness", "nature_plant", "people_society"]', false, '["/init/sarah.jpeg"]', 'love'),
+    ('charlotte', 'charlotte@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Charlotte', 'female', 'male', 'Passionnée de littérature et de théâtre. J''aime les longues discussions autour d''un café.', 'Libraire', '1994-11-30', 'France', '["book_novel", "writing", "art"]', false, '["/init/charlotte.jpeg"]', 'friends'),
+    ('francois', 'francois@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Francois', 'male', 'female', 'Chef cuisinier, amateur de gastronomie et de vins. Je voyage pour découvrir de nouvelles saveurs.', 'Chef Cuisinier', '1988-07-19', 'France', '["food_drink", "travel_places", "photography"]', false, '["/init/francois.jpeg"]', 'love'),
+    ('shanley', 'shanley@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Shanley', 'male', 'female', 'Développeur web, geek et fière de l''être. Fan de jeux vidéo et de nouvelles technologies.', 'Développeur Full-Stack', '1995-01-25', 'United States', '["gaming", "technology", "movie"]', false, '["/init/shanley.jpeg"]', 'business'),
+    ('anissa', 'anissa@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Anissa', 'female', 'male', 'Danseuse professionnelle. La musique est ma vie, la danse est ma passion.', 'Danseuse', '1992-09-08', 'Morocco', '["dancing_singing", "music", "fashion"]', false, '["/init/anissa.jpeg"]', 'fling'),
+    ('mehdi', 'mehdi@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Mehdi', 'male', 'female', 'Architecte passionné par le design et l''art moderne. Amateur de photographie urbaine.', 'Architecte', '1989-04-17', 'France', '["architecture", "photography", "art"]', false, '["/init/mehdi.jpeg"]', 'business'),
+    ('carol', 'carol@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Carol', 'female', 'male', 'Vétérinaire et amoureuse des animaux. Je voyage dès que possible pour découvrir la faune mondiale.', 'Vétérinaire', '1993-12-05', 'United Kingdom', '["animals", "nature_plant", "travel_places"]', false, '["/init/carol.jpeg"]', 'love'),
+    ('annie', 'annie@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Annie', 'female', 'male', 'Professeure de langues, polyglotte. J''adore découvrir de nouvelles cultures et voyager.', 'Professeure', '1990-10-14', 'Canada', '["language", "travel_places", "people_society"]', false, '["/init/annie.jpeg"]', 'friends');
 
 CREATE TABLE IF NOT EXISTS user_interactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
