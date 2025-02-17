@@ -1,4 +1,4 @@
-from flask import jsonify, session, request
+from flask import jsonify, session, request, g
 from models.user_model import UserModel
 import json
 import os
@@ -17,19 +17,15 @@ class UserController:
 
     @staticmethod
     def save_uploaded_file(file, user_id):
-        # Generate unique filename
         filename = secure_filename(file.filename)
         extension = filename.rsplit('.', 1)[1].lower()
         new_filename = f"{user_id}_{uuid.uuid4().hex[:8]}.{extension}"
         
-        # Complete file path
         logging.info(f"Uploading file to: {UserController.UPLOAD_FOLDER}")
         filepath = os.path.join(UserController.UPLOAD_FOLDER, new_filename)
         
-        # Save file
         file.save(filepath)
         
-        # Return relative path for DB storage
         return f"/usersPictures/{new_filename}"
 
     @staticmethod
@@ -184,3 +180,45 @@ class UserController:
                 "error": "Failed to process dislike",
                 "details": str(e)
             }), 400
+
+    @staticmethod
+    def add_test_likes():
+        try:
+            if 'user_id' not in session:
+                return jsonify({"message": "Unauthorized"}), 401
+                
+            user_id = session['user_id']
+            potential_likers = UserModel.get_potential_matches(user_id)
+            
+            likes_added = 0
+            for user in potential_likers[:5]:
+                try:
+                    success = UserModel.create_interaction(
+                        user_id=user['id'],
+                        target_user_id=user_id,
+                        interaction_type='like'
+                    )
+                    if success:
+                        likes_added += 1
+                except Exception as e:
+                    logging.error(f"Error adding like from user {user['id']}: {str(e)}")
+                    continue
+            
+            if likes_added > 0:
+                return jsonify({
+                    'status': 'success',
+                    'message': f'Successfully added {likes_added} test likes to your profile',
+                    'likes_added': likes_added
+                }), 200
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'No likes could be added. You might have already received likes from all potential matches.'
+                }), 400
+                
+        except Exception as e:
+            logging.error(f"Error in add_test_likes: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': str(e)
+            }), 500

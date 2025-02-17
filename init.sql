@@ -13,17 +13,16 @@ CREATE TABLE IF NOT EXISTS users (
     job VARCHAR(100),
     birthdate DATE,
     country VARCHAR(100),
-    interests JSON, -- Stockage des intérêts en format JSON
+    interests JSON,
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,
-    photos JSON, -- Stockage des URLs/chemins des photos en JSON (maximum 4)
+    photos JSON,
     match_score INT DEFAULT 0,
     match_type ENUM('love', 'friends', 'fling', 'business'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-/* Insertion des utilisateurs avec leurs photos */
 INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, interests, is_first_login, photos, match_type) VALUES
     ('sebastien', 'sebastien@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sebastien', 'male', 'female', 'Passionné de photographie et de voyages. Amateur de bons vins et de cuisine française.', 'Photographe', '1990-05-15', 'France', '["photography", "travel_places", "food_drink"]', false, '["/init/sebastien.jpeg", "/init/sebastien.jpeg", "/init/sebastien.jpeg", "/init/sebastien.jpeg"]', 'love'),
     ('elise', 'elise@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Elise', 'female', 'male', 'Artiste dans l''âme, je peins et dessine. Je cherche à partager ma passion pour l''art.', 'Artiste Peintre', '1993-08-22', 'France', '["art", "painting", "nature_plant"]', false, '["/init/elise.jpeg", "/init/elise.jpeg", "/init/elise.jpeg", "/init/elise.jpeg"]', 'friends'),

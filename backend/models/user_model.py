@@ -47,9 +47,9 @@ class UserModel:
             print("Database error:", err)
             return None
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
 
@@ -84,9 +84,9 @@ class UserModel:
             print("Database error:", err)
             return None
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
@@ -159,9 +159,9 @@ class UserModel:
             else:
                 return None, f"Database error: {error_msg}"
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
@@ -178,9 +178,9 @@ class UserModel:
             logging.error("Database error:", err)
             return jsonify({"message": "Email not verified"}), 400
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
@@ -206,9 +206,9 @@ class UserModel:
             logging.error(f"Database error in create_interaction: {err}")
             return False
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
@@ -237,9 +237,9 @@ class UserModel:
             logging.error(f"Database error in check_match: {err}")
             return False
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()
 
     @staticmethod
@@ -256,7 +256,6 @@ class UserModel:
             if not current_user:
                 logging.error("Current user not found")
                 return []
-            # Parse current user's interests
             current_user_interests = []
             if current_user.get('interests'):
                 if isinstance(current_user['interests'], bytes):
@@ -320,7 +319,7 @@ class UserModel:
             logging.error(f"Database error in get_potential_matches: {err}")
             return []
         finally:
-            if cursor:
+            if 'cursor' in locals() and cursor:
                 cursor.close()
-            if connection:
+            if 'connection' in locals() and connection:
                 connection.close()

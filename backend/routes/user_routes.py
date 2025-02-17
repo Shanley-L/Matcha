@@ -30,3 +30,8 @@ def like_user(liked_user_id):
 @user_bp.route('/dislike/<int:disliked_user_id>', methods=['POST'])
 def dislike_user(disliked_user_id):
     return UserController.dislike_user(disliked_user_id)
+
+@user_bp.route('/add-test-likes', methods=['POST'])
+@email_verified_required
+def add_test_likes():
+    return UserController.add_test_likes()

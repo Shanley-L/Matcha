@@ -8,6 +8,8 @@ import '../styles/pages/Profile.css';
 const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const [addingLikes, setAddingLikes] = useState(false);
+    const [likesAdded, setLikesAdded] = useState(false);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -23,6 +25,20 @@ const Profile = () => {
         console.log("loadProfile");
         loadProfile();
     }, []); // Only run once when component mounts
+
+    const handleAddTestLikes = async () => {
+        try {
+            setAddingLikes(true);
+            const response = await axios.post('/api/user/add-test-likes');
+            alert(response.data.message);
+            setLikesAdded(true);
+        } catch (error) {
+            console.error('Error adding test likes:', error);
+            alert('Error adding test likes. Please try again.');
+        } finally {
+            setAddingLikes(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -50,6 +66,17 @@ const Profile = () => {
                     </div>
                 )}
             </div>
+            {!likesAdded && (
+                <div className="test-likes-button-container">
+                    <button 
+                        onClick={handleAddTestLikes}
+                        disabled={addingLikes}
+                        className="test-likes-button"
+                    >
+                        {addingLikes ? 'Adding Likes...' : 'Add Test Likes'}
+                    </button>
+                </div>
+            )}
             <BottomNavBar />
         </div>
     );
