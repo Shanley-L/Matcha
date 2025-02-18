@@ -192,34 +192,97 @@
 }
 
 .cards-container {
-  flex: 1;
-  position: flex;
-  margin-top: 10px;
-  padding: 20px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* margin-bottom: 70px; */
-  width: 100%;
-  height: calc(100vh - 140px);
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 40px; /* Add space for the buttons */
 }
 
 .card-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 400px;
-  height: 100%;
-  max-height: 600px;
+    width: 100%;
+    max-width: 400px;
+    height: calc(100vh - 180px); /* Adjust for header and bottom nav */
+    min-height: 500px;
+    max-height: 700px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.swipe-buttons {
+    position: absolute;
+    bottom: 5%;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: clamp(16px, 3vw, 24px); /* Responsive gap */
+    z-index: 1000;
+    justify-content: center;
+    padding: 0 20px;
+}
+
+.swipe-button {
+    width: clamp(48px, 8vw, 54px); /* Responsive button size */
+    height: clamp(48px, 8vw, 54px);
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.swipe-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.swipe-button svg {
+    width: clamp(22px, 4vw, 26px); /* Responsive icon size */
+    height: clamp(22px, 4vw, 26px);
+}
+
+.swipe-button.dislike {
+    color: #fd5068;
+}
+
+.swipe-button.dislike:hover:not(:disabled) {
+    background-color: #fd5068;
+    color: white;
+    transform: scale(1.05);
+}
+
+.swipe-button.like {
+    color: #1be4a1;
+}
+
+.swipe-button.like:hover:not(:disabled) {
+    background-color: #1be4a1;
+    color: white;
+    transform: scale(1.05);
+}
+
+.swipe-button.star {
+    color: #fff01c;
+}
+
+.swipe-button.star:hover:not(:disabled) {
+    background-color: #e8f53a;
+    color: white;
+    transform: scale(1.05);
 }
 
 .empty-state-message {
-  text-align: center;
-  color: #666;
-  font-size: 18px;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin: 20px;
+    text-align: center;
+    color: #666;
+    font-size: 18px;
+    max-width: 300px;
+    line-height: 1.5;
 } 

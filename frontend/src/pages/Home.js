@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../config/axios';
 import SwipeCard from '../components/SwipeCard';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
 import '../styles/pages/shared.css';
 import '../styles/pages/Home.css';
+import { IoClose, IoHeart, IoStar } from 'react-icons/io5';
 
 const Home = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -50,30 +51,19 @@ const Home = () => {
         }
     };
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                const userResponse = await axios.get('/api/user/profile');
-                if (userResponse.data.looking_for) {
-                    setSelectedGender(userResponse.data.looking_for);
-                }
-                await fetchPotentialMatches();
-            } catch (error) {
-                console.error('Error fetching initial data:', error);
-            }
-        };
-        
-        fetchInitialData();
-    }, []);
-
-    const fetchPotentialMatches = async () => {
+    const fetchPotentialMatches = useCallback(async () => {
         try {
-            const response = await axios.get('/api/user/matches');
+            const response = await axios.get('/api/user/matches', {
+                params: {
+                    min_age: minAge,
+                    max_age: maxAge
+                }
+            });
             setPotentialMatches(response.data);
         } catch (error) {
             console.error('Error fetching matches:', error);
         }
-    };
+    }, [minAge, maxAge]);
 
     const handleSwipe = async (direction, userId) => {
         try {
@@ -95,25 +85,73 @@ const Home = () => {
         }
     };
 
+    const handleApplyFilters = async () => {
+        setCurrentIndex(0);
+        setPotentialMatches([]);
+        await fetchPotentialMatches();
+        setIsFilterOpen(false);
+    };
+
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const userResponse = await axios.get('/api/user/profile');
+                if (userResponse.data.looking_for) {
+                    setSelectedGender(userResponse.data.looking_for);
+                    console.log("test"); 
+                }
+                await fetchPotentialMatches();
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+            }
+        };
+        
+        fetchInitialData();
+    }, [fetchPotentialMatches]);
+
     return (
         <div className="home-container" style={{ width: '100%' }}>
             <PageHeader showSettings={true} onSettingsClick={toggleFilter} />
             
             <div className="cards-container">
-                    {potentialMatches.length > currentIndex && (
-                <div className="card-wrapper">
+                {potentialMatches.length > currentIndex && (
+                    <div className="card-wrapper">
                         <SwipeCard
                             key={potentialMatches[currentIndex].id}
                             user={potentialMatches[currentIndex]}
                             onSwipe={handleSwipe}
                         />
-                </div>
-                    )}
+                    </div>
+                )}
                 {(potentialMatches.length === 0 || currentIndex >= potentialMatches.length) && (
                     <div className="empty-state-message">
                         No more profiles to show right now!
+                        Try changing settings or wait for new profiles to be added.
                     </div>
                 )}
+                <div className="swipe-buttons">
+                    <button 
+                        className="swipe-button dislike"
+                        onClick={() => handleSwipe('left', potentialMatches[currentIndex]?.id)}
+                        disabled={!potentialMatches[currentIndex]}
+                    >
+                        <IoClose />
+                    </button>
+                    <button 
+                        className="swipe-button like"
+                        onClick={() => handleSwipe('right', potentialMatches[currentIndex]?.id)}
+                        disabled={!potentialMatches[currentIndex]}
+                    >
+                        <IoHeart />
+                    </button>
+                    <button 
+                        className="swipe-button star"
+                        onClick={() => console.log('Super like')}
+                        disabled={!potentialMatches[currentIndex]}
+                    >
+                        <IoStar />
+                    </button>
+                </div>
             </div>
             <div className={`filter-panel ${isFilterOpen ? 'open' : ''}`}>
                 <div className="filter-content">
@@ -181,8 +219,12 @@ const Home = () => {
                     </div>
 
                     <div className="filter-actions">
-                        <button className="reset-button">Reset</button>
-                        <button className="apply-button">Apply</button>
+                        <button className="reset-button" onClick={() => {
+                            setMinAge(18);
+                            setMaxAge(50);
+                            setSelectedGender('female');
+                        }}>Reset</button>
+                        <button className="apply-button" onClick={handleApplyFilters}>Apply</button>
                     </div>
                 </div>
             </div>

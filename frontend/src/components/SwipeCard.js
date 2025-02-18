@@ -66,7 +66,7 @@ const SwipeCard = ({ user, onSwipe }) => {
       contentSections.push({
         key: 'bio',
         content: (
-          <div className="profile-section">
+          <div key="bio-section" className="profile-section">
             <h3>About Me</h3>
             <p>{user.bio}</p>
           </div>
@@ -78,7 +78,7 @@ const SwipeCard = ({ user, onSwipe }) => {
       contentSections.push({
         key: 'job',
         content: (
-          <div className="profile-section">
+          <div key="job-section" className="profile-section">
             <h3>Occupation</h3>
             <p>{user.job}</p>
           </div>
@@ -90,11 +90,11 @@ const SwipeCard = ({ user, onSwipe }) => {
       contentSections.push({
         key: 'interests',
         content: (
-          <div className="profile-section">
+          <div key="interests-section" className="profile-section">
             <h3>Interests</h3>
             <div className="interests-list">
               {(typeof user.interests === 'string' ? JSON.parse(user.interests) : user.interests).map((interest, index) => (
-                <span key={index} className="interest-tag">{interest}</span>
+                <span key={`interest-${index}`} className="interest-tag">{interest}</span>
               ))}
             </div>
           </div>
@@ -106,7 +106,7 @@ const SwipeCard = ({ user, onSwipe }) => {
       contentSections.push({
         key: 'location',
         content: (
-          <div className="profile-section">
+          <div key="location-section" className="profile-section">
             <h3>Location</h3>
             <p>{user.country}</p>
           </div>
@@ -116,11 +116,15 @@ const SwipeCard = ({ user, onSwipe }) => {
 
     // Interleave content sections with photos
     contentSections.forEach((section, index) => {
-      sections.push(section.content);
+      sections.push(
+        <div key={`section-${section.key}`}>
+          {section.content}
+        </div>
+      );
       if (remainingPhotos[index]) {
         sections.push(
           <div 
-            key={`photo-${index}`}
+            key={`photo-section-${index}`}
             className="profile-photo"
             style={{ 
               backgroundImage: `url(/shared/uploads/${remainingPhotos[index]})`
@@ -136,7 +140,7 @@ const SwipeCard = ({ user, onSwipe }) => {
       remainingPhotos.slice(contentSections.length).forEach((photo, index) => {
         sections.push(
           <div 
-            key={`extra-photo-${index}`}
+            key={`extra-photo-section-${index}`}
             className="profile-photo"
             style={{ 
               backgroundImage: `url(/shared/uploads/${photo})`

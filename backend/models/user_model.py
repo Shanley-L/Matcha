@@ -243,7 +243,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def get_potential_matches(current_user_id, limit=10):
+    def get_potential_matches(current_user_id, limit=10, min_age=None, max_age=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
@@ -270,19 +270,34 @@ class UserModel:
                 gender_condition = "AND gender = 'male'"
             elif current_user['looking_for'] == 'female':
                 gender_condition = "AND gender = 'female'"
+
+            # Add age range filter
+            age_condition = ""
+            if min_age is not None and max_age is not None:
+                age_condition = """
+                    AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) >= %s 
+                    AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) <= %s
+                """
+
             # Get users that haven't been interacted with by the current user
             query = f"""
                 SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests
                 FROM users
                 WHERE id != %s
                 {gender_condition}
+                {age_condition}
                 AND id NOT IN (
                     SELECT target_user_id 
                     FROM user_interactions 
                     WHERE user_id = %s
                 )
             """
-            cursor.execute(query, (current_user_id, current_user_id))
+            params = [current_user_id]
+            if min_age is not None and max_age is not None:
+                params.extend([min_age, max_age])
+            params.append(current_user_id)
+            
+            cursor.execute(query, tuple(params))
             matches = cursor.fetchall()
             # Process the results and calculate match scores
             processed_matches = []

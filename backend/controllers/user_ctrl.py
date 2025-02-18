@@ -120,9 +120,16 @@ class UserController:
             current_user = UserModel.get_by_id(session['user_id'])
             if not current_user:
                 return jsonify({"message": "User not found"}), 404
+
+            # Get age range from query parameters
+            min_age = request.args.get('min_age', type=int)
+            max_age = request.args.get('max_age', type=int)
+
             matches = UserModel.get_potential_matches(
                 current_user_id=session['user_id'],
-                limit=10  # Number of profiles to return
+                limit=10,  # Number of profiles to return
+                min_age=min_age,
+                max_age=max_age
             )
             return jsonify(matches), 200
         except Exception as e:
