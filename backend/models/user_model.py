@@ -12,7 +12,7 @@ class UserModel:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
             birthdate, country, gender, looking_for, interests, photos, match_type,\
-            job, bio, created_at FROM users WHERE id = %s", (user_id,))
+            job, bio, created_at, viewers FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
                 # Convert bytes to string for JSON fields
@@ -20,6 +20,8 @@ class UserModel:
                     user['interests'] = json.loads(user['interests'].decode())
                 if user.get('photos') and isinstance(user['photos'], bytes):
                     user['photos'] = json.loads(user['photos'].decode())
+                if user.get('viewers') and isinstance(user['viewers'], bytes):
+                    user['viewers'] = json.loads(user['viewers'].decode())
                 # Convert datetime objects to string
                 if user.get('birthdate'):
                     user['birthdate'] = user['birthdate'].isoformat() if user['birthdate'] else None
@@ -90,7 +92,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None):
+    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -132,6 +134,9 @@ class UserModel:
             if bio:
                 update_fields.append("bio = %s")
                 params.append(bio)
+            if viewers:
+                update_fields.append("viewers = %s")
+                params.append(viewers)
 
             # If no field is provided for update, return error
             if not update_fields:

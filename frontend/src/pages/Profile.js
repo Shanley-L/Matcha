@@ -8,8 +8,20 @@ import '../styles/pages/Profile.css';
 const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
-    const [addingLikes, setAddingLikes] = useState(false);
-    const [likesAdded, setLikesAdded] = useState(false);
+    const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+    const calculateAge = (birthdate) => {
+        const birth = new Date(birthdate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        
+        return age;
+    };
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -22,21 +34,18 @@ const Profile = () => {
                 setLoading(false);
             }
         };
-        console.log("loadProfile");
         loadProfile();
-    }, []); // Only run once when component mounts
+    }, []);
 
-    const handleAddTestLikes = async () => {
-        try {
-            setAddingLikes(true);
-            const response = await axios.post('/api/user/add-test-likes');
-            alert(response.data.message);
-            setLikesAdded(true);
-        } catch (error) {
-            console.error('Error adding test likes:', error);
-            alert('Error adding test likes. Please try again.');
-        } finally {
-            setAddingLikes(false);
+    const nextPhoto = () => {
+        if (user?.photos?.length) {
+            setCurrentPhotoIndex((prev) => (prev + 1) % user.photos.length);
+        }
+    };
+
+    const prevPhoto = () => {
+        if (user?.photos?.length) {
+            setCurrentPhotoIndex((prev) => (prev - 1 + user.photos.length) % user.photos.length);
         }
     };
 
@@ -58,25 +67,61 @@ const Profile = () => {
         <div className="page-container">
             <PageHeader />
             <div className="content">
-                <h1>Profile</h1>
+                <div className='photo-gallery-container'>
+                    {user.photos && user.photos.length > 0 ? (
+                        <>
+                            <div className='photo-gallery'>
+                                <img 
+                                    src={`./shared/uploads` + user.photos[currentPhotoIndex]} 
+                                    alt="user pics" 
+                                    className='profile-photos'
+                                />
+                                <button className="gallery-nav prev" onClick={prevPhoto}>
+                                    <i className="fas fa-chevron-left"></i>
+                                </button>
+                                <button className="gallery-nav next" onClick={nextPhoto}>
+                                    <i className="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div className="photo-indicators">
+                                {user.photos.map((_, index) => (
+                                    <span 
+                                        key={index}
+                                        className={`photo-indicator ${index === currentPhotoIndex ? 'active' : ''}`}
+                                        onClick={() => setCurrentPhotoIndex(index)}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <p>No photos available</p>
+                    )}
+                </div>
+
                 {user && (
                     <div className="profile-info">
-                        <h1>Welcome, {user.firstname}!</h1>
-                        <p>Edit your profile</p>
+                        <div className="profile-header">
+                            <h1>
+                                {user.username} {user.firstname}
+                                <span>, {calculateAge(user.birthdate)} ans</span>
+                            </h1>
+                            <i className="fa-solid fa-pen-to-square"></i>
+                        </div>
+                        <h2 className="profile-header">About</h2>
+                        <p>{user.job}, {user.country}</p>
+                        <h2 className="profile-header">Interests</h2>
+                        <div className='interest-array'>
+                            {user.interests && user.interests.length > 0 ? (
+                                user.interests.map((interest) => (
+                                    <p key={interest} className='interest'>{interest}</p>
+                                ))
+                            ) : (
+                                <p>No interest available</p>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
-            {!likesAdded && (
-                <div className="test-likes-button-container">
-                    <button 
-                        onClick={handleAddTestLikes}
-                        disabled={addingLikes}
-                        className="test-likes-button"
-                    >
-                        {addingLikes ? 'Adding Likes...' : 'Add Test Likes'}
-                    </button>
-                </div>
-            )}
             <BottomNavBar />
         </div>
     );

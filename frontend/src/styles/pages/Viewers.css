@@ -1,0 +1,86 @@
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 20px;
+    color: #333;
+}
+
+.viewers-list {
+    padding-top: 100px;
+    background-color: white;
+    border-radius: 20px;
+    margin: 20px;
+    width: 90%;
+    overflow: hidden;
+}
+
+.viewer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.viewer-item:last-child {
+    border-bottom: none;
+}
+
+.viewer-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.viewer-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.viewer-details h3 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.viewer-details p {
+    font-size: 14px;
+    color: #666;
+    margin: 4px 0 0 0;
+}
+
+.visit-button {
+    background-color: #8A2BE2;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.visit-button.invited {
+    background-color: transparent;
+    border: 1px solid #8A2BE2;
+    color: #8A2BE2;
+}
+
+.visit-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Loading state */
+.viewers-container {
+    background-color: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px;
+    text-align: center;
+    color: #666;
+}

@@ -1,16 +1,24 @@
 import React from 'react';
-import { IoSettingsSharp, IoLogOutOutline } from 'react-icons/io5';
+import { IoSettingsSharp, IoLogOutOutline, IoEye } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 import '../styles/components/PageHeader.css';
 
-const PageHeader = ({ showSettings, onSettingsClick }) => {
+const PageHeader = ({ showSettings, onSettingsClick}) => {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
         try {
             await axios.post('/api/auth/logout');
             navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
+    const onViewersClick = async () => {
+        try {
+            await navigate('/viewers');
         } catch (error) {
             console.error('Logout failed:', error);
         }
@@ -30,6 +38,9 @@ const PageHeader = ({ showSettings, onSettingsClick }) => {
                         <IoSettingsSharp />
                     </button>
                 )}
+                <button className="settings-button" onClick={onViewersClick}>
+                    <IoEye />
+                </button>
                 <button className="logout-button" onClick={handleLogout}>
                     <IoLogOutOutline />
                 </button>

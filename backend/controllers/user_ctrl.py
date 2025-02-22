@@ -91,7 +91,8 @@ class UserController:
                 matchType=data.get('matchType'),
                 is_first_login=data.get('is_first_login'),
                 job=data.get('job'),
-                bio=data.get('bio')
+                bio=data.get('bio'),
+                viewers=data.get('viewers')
             )
             if updated_user_id:
                 return jsonify({

@@ -14,20 +14,76 @@ const CompleteProfile = () => {
         bio: '',
         birthdate: ''
     });
+    const [birthdateError, setBirthdateError] = useState('');
     const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
 
+    const validateBirthdate = (value) => {
+        // Vérifier le format dd/mm/yyyy
+        const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+        if (!dateRegex.test(value)) {
+            return "Format invalide. Utilisez dd/mm/yyyy";
+        }
+
+        // Convertir la date
+        const [day, month, year] = value.split('/');
+        const birthdate = new Date(year, month - 1, day);
+        const today = new Date();
+
+        // Vérifier si la date est valide
+        if (birthdate.getDate() != parseInt(day) || 
+            birthdate.getMonth() != parseInt(month) - 1 || 
+            birthdate.getFullYear() != parseInt(year)) {
+            return "Date invalide";
+        }
+
+        // Calculer l'âge
+        let age = today.getFullYear() - birthdate.getFullYear();
+        const monthDiff = today.getMonth() - birthdate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
+            age--;
+        }
+
+        // Vérifier l'âge
+        if (age < 18) {
+            return "Vous devez avoir au moins 18 ans";
+        }
+        if (age > 120) {
+            return "L'âge maximum est de 120 ans";
+        }
+
+        return "";
+    };
+
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        
+        if (name === 'birthdate') {
+            const error = validateBirthdate(value);
+            setBirthdateError(error);
+            // Mettre à jour la valeur même s'il y a une erreur pour permettre la correction
+            setFormData(prev => ({ ...prev, [name]: value }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleNext = () => {
-        setUserData({ ...userData, ...formData }); // Ajouter les nouvelles informations au contexte
-        navigate('/upload-photos');
+        if (!birthdateError) {
+            // Convertir la date au format ISO pour le backend
+            const [day, month, year] = formData.birthdate.split('/');
+            const isoDate = `${year}-${month}-${day}`;
+            const dataToSend = {
+                ...formData,
+                birthdate: isoDate
+            };
+            setUserData({ ...userData, ...dataToSend });
+            navigate('/upload-photos');
+        }
     };
 
     const isFormValid = () => {
-        return Object.values(formData).every(value => value.trim() !== '');
+        return Object.values(formData).every(value => value.trim() !== '') && !birthdateError;
     };
 
     return (
@@ -83,14 +139,14 @@ const CompleteProfile = () => {
 
                 <div className="form-group">
                     <input
-                        type="date"
+                        type="text"
                         name="birthdate"
-                        placeholder="Birthdate"
-                        className="form-input"
+                        placeholder="Birthdate (dd/mm/yyyy)"
+                        className={`form-input ${birthdateError ? 'error' : ''}`}
                         value={formData.birthdate}
                         onChange={handleChange}
-                        max={new Date().toISOString().split('T')[0]}
                     />
+                    {birthdateError && <div className="error-message">{birthdateError}</div>}
                 </div>
 
                 <div className="form-group">

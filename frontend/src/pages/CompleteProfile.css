@@ -146,9 +146,13 @@ input[type="date"].form-input::-webkit-datetime-edit-fields-wrapper {
     cursor: not-allowed;
 }
 
+.form-input.error {
+    border-color: #ff4d4f;
+}
+
 .error-message {
-    color: #dc2626;
-    font-size: 14px;
+    color: #ff4d4f;
+    font-size: 12px;
     margin-top: 4px;
-    padding-left: 16px;
-} 
+    margin-left: 4px;
+}

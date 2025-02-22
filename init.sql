@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,
     photos JSON,
+    viewers JSON,
     match_score INT DEFAULT 0,
     match_type ENUM('love', 'friends', 'fling', 'business'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

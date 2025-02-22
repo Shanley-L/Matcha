@@ -10,6 +10,7 @@ import Maps from './pages/Maps';
 import Likes from './pages/Likes';
 import Chats from './pages/Chats';
 import Profile from './pages/Profile';
+import Viewers from './pages/Viewers';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import SelectCountry from './pages/SelectCountry';
@@ -79,6 +80,11 @@ const App = () => {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/viewers" element={
+            <ProtectedRoute>
+              <Viewers />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Login />} />
