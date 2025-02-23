@@ -1,5 +1,5 @@
 // UploadPhotos.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext'; // Importer le hook pour accéder au contexte
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack, IoAdd } from 'react-icons/io5';
@@ -8,10 +8,35 @@ import './UploadPhotos.css';
 
 const MAX_PHOTOS = 6;
 
-const UploadPhotos = () => {
+const EditPhoto = () => {
     const [photos, setPhotos] = useState([]);
+    const [loading, setLoading] = useState(true);
     const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const loadUserPhotos = async () => {
+            try {
+                const response = await axios.get('/api/user/profile');
+                if (response.data.photos) {
+                    // Convertir les chemins de photos en objets de preview
+                    const existingPhotos = response.data.photos.map(photoPath => ({
+                        file: null, // Pas de fichier pour les photos existantes
+                        preview: `./shared/uploads${photoPath}`,
+                        isExisting: true, // Marquer comme photo existante
+                        path: photoPath // Garder le chemin original
+                    }));
+                    setPhotos(existingPhotos);
+                }
+            } catch (error) {
+                console.error('Error loading user photos:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadUserPhotos();
+    }, []);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -22,39 +47,30 @@ const UploadPhotos = () => {
         
         const newPhotos = files.map(file => ({
             file: file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            isExisting: false
         }));
         
-        setPhotos([...photos, ...newPhotos]);
+        setPhotos(prev => [...prev, ...newPhotos]);
     };
 
     const handleSubmit = async () => {
         try {
             const formData = new FormData();
 
-            // Ajouter chaque photo au formData
+            // Ajouter les nouvelles photos au formData
             photos.forEach(photo => {
-                formData.append('photos', photo.file);
-            });
-
-            // Ajouter les autres données du contexte utilisateur
-            Object.keys(userData).forEach(key => {
-                if (userData[key] !== null && userData[key] !== undefined && key !== 'photos') {
-                    if (Array.isArray(userData[key]) || typeof userData[key] === 'object') {
-                        formData.append(key, JSON.stringify(userData[key]));
-                    } else {
-                        formData.append(key, userData[key].toString());
-                    }
+                if (!photo.isExisting && photo.file) {
+                    formData.append('photos', photo.file);
                 }
             });
 
-            // Log des données envoyées
-            console.log('FormData content:');
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
+            // Ajouter les chemins des photos existantes
+            const existingPhotoPaths = photos
+                .filter(photo => photo.isExisting)
+                .map(photo => photo.path);
+            formData.append('photos_order', JSON.stringify(existingPhotoPaths));
 
-            // Envoyer les données au backend
             const response = await axios.put('/api/user/update', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -62,22 +78,27 @@ const UploadPhotos = () => {
             });
 
             if (response.status === 200) {
-                // Mettre à jour le contexte avec les chemins des photos retournés par le backend
-                setUserData({ ...userData, photos: response.data.photos });
-                navigate('/select-interests');
+                navigate('/edit-profile');
             }
         } catch (error) {
-            console.error('Error uploading photos:', error.response?.data || error);
-            alert('Failed to upload photos. Please try again.');
+            console.error('Error updating photos:', error.response?.data || error);
+            alert('Failed to update photos. Please try again.');
         }
     };
 
     const removePhoto = (index) => {
-        const newPhotos = [...photos];
-        // Libérer l'URL de prévisualisation
-        URL.revokeObjectURL(newPhotos[index].preview);
-        newPhotos.splice(index, 1);
-        setPhotos(newPhotos);
+        setPhotos(prev => {
+            const newPhotos = [...prev];
+            const photo = newPhotos[index];
+            
+            // Si c'est une nouvelle photo, révoquer l'URL
+            if (!photo.isExisting) {
+                URL.revokeObjectURL(photo.preview);
+            }
+            
+            newPhotos.splice(index, 1);
+            return newPhotos;
+        });
     };
 
     const renderPhotoSlots = () => {
@@ -115,17 +136,30 @@ const UploadPhotos = () => {
         return slots;
     };
 
+    if (loading) {
+        return (
+            <div className="photos-container">
+                <header className="photos-header">
+                    <button className="back-button" onClick={() => navigate(-1)}>
+                        <IoChevronBack />
+                    </button>
+                    <h2>Loading...</h2>
+                </header>
+            </div>
+        );
+    }
+
     return (
         <div className="photos-container">
             <header className="photos-header">
                 <button className="back-button" onClick={() => navigate(-1)}>
                     <IoChevronBack />
                 </button>
-                <h2>Add Your Best Photos</h2>
+                <h2>Edit Your Photos</h2>
             </header>
 
             <p className="photos-description">
-                Add your best photos to get a higher amount of daily matches.
+                Add or remove photos to get a higher amount of daily matches.
             </p>
 
             <div className="photos-grid">
@@ -137,10 +171,10 @@ const UploadPhotos = () => {
                 onClick={handleSubmit}
                 disabled={photos.length === 0}
             >
-                Continue
+                Save Changes
             </button>
         </div>
     );
 };
 
-export default UploadPhotos;
+export default EditPhoto;

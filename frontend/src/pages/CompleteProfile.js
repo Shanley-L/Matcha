@@ -1,5 +1,5 @@
 // CompleteProfile.js
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useUser } from '../context/UserContext'; // Importer le hook pour accéder au contexte
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack, IoChevronDown } from 'react-icons/io5';
@@ -12,70 +12,63 @@ const CompleteProfile = () => {
         looking_for: '',
         job: '',
         bio: '',
-        birthdate: ''
+        day: '',
+        month: '',
+        year: ''
     });
-    const [birthdateError, setBirthdateError] = useState('');
     const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
 
-    const validateBirthdate = (value) => {
-        // Vérifier le format dd/mm/yyyy
-        const dateRegex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
-        if (!dateRegex.test(value)) {
-            return "Format invalide. Utilisez dd/mm/yyyy";
-        }
-
-        // Convertir la date
-        const [day, month, year] = value.split('/');
-        const birthdate = new Date(year, month - 1, day);
-        const today = new Date();
-
-        // Vérifier si la date est valide
-        if (birthdate.getDate() != parseInt(day) || 
-            birthdate.getMonth() != parseInt(month) - 1 || 
-            birthdate.getFullYear() != parseInt(year)) {
-            return "Date invalide";
-        }
-
-        // Calculer l'âge
-        let age = today.getFullYear() - birthdate.getFullYear();
-        const monthDiff = today.getMonth() - birthdate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthdate.getDate())) {
-            age--;
-        }
-
-        // Vérifier l'âge
-        if (age < 18) {
-            return "Vous devez avoir au moins 18 ans";
-        }
-        if (age > 120) {
-            return "L'âge maximum est de 120 ans";
-        }
-
-        return "";
-    };
+    // Arrays for date selection
+    const days = useMemo(() => Array.from({ length: 31 }, (_, i) => i + 1), []);
+    const months = useMemo(() => [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], []);
+    const currentYear = new Date().getFullYear();
+    const years = useMemo(() => Array.from({ length: 100 }, (_, i) => currentYear - i), [currentYear]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const calculateAge = (year, month, day) => {
+        const birthDate = new Date(year, months.indexOf(month), day);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
         
-        if (name === 'birthdate') {
-            const error = validateBirthdate(value);
-            setBirthdateError(error);
-            // Mettre à jour la valeur même s'il y a une erreur pour permettre la correction
-            setFormData(prev => ({ ...prev, [name]: value }));
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        return age;
+    };
+
+    const isDateValid = () => {
+        if (!formData.day || !formData.month || !formData.year) return false;
+
+        const age = calculateAge(formData.year, formData.month, formData.day);
+        console.log(age);
+        if (age >= 18 && age <= 120) {
+            return true;
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            return false;
         }
     };
 
     const handleNext = () => {
-        if (!birthdateError) {
-            // Convertir la date au format ISO pour le backend
-            const [day, month, year] = formData.birthdate.split('/');
-            const isoDate = `${year}-${month}-${day}`;
+        if (isDateValid()) {
+            const monthIndex = months.indexOf(formData.month) + 1;
+            const birthdate = `${formData.year}-${monthIndex.toString().padStart(2, '0')}-${formData.day.toString().padStart(2, '0')}`;
+            
             const dataToSend = {
                 ...formData,
-                birthdate: isoDate
+                birthdate
             };
             setUserData({ ...userData, ...dataToSend });
             navigate('/upload-photos');
@@ -83,7 +76,12 @@ const CompleteProfile = () => {
     };
 
     const isFormValid = () => {
-        return Object.values(formData).every(value => value.trim() !== '') && !birthdateError;
+        return formData.firstname.trim() !== '' &&
+            formData.gender.trim() !== '' &&
+            formData.looking_for.trim() !== '' &&
+            formData.job.trim() !== '' &&
+            formData.bio.trim() !== '' &&
+            isDateValid();
     };
 
     return (
@@ -137,16 +135,43 @@ const CompleteProfile = () => {
                     <IoChevronDown className="input-icon" />
                 </div>
 
-                <div className="form-group">
-                    <input
-                        type="text"
-                        name="birthdate"
-                        placeholder="Birthdate (dd/mm/yyyy)"
-                        className={`form-input ${birthdateError ? 'error' : ''}`}
-                        value={formData.birthdate}
+                <div className="form-group birthdate-group" style={{ display: 'flex', gap: '1rem' }}>
+                    <select
+                        name="day"
+                        className="form-input"
+                        value={formData.day}
                         onChange={handleChange}
-                    />
-                    {birthdateError && <div className="error-message">{birthdateError}</div>}
+                        style={{ flex: 1 }}
+                    >
+                        <option value="">Day</option>
+                        {days.map(day => (
+                            <option key={day} value={day}>{day}</option>
+                        ))}
+                    </select>
+                    <select
+                        name="month"
+                        className="form-input"
+                        value={formData.month}
+                        onChange={handleChange}
+                        style={{ flex: 2 }}
+                    >
+                        <option value="">Month</option>
+                        {months.map(month => (
+                            <option key={month} value={month}>{month}</option>
+                        ))}
+                    </select>
+                    <select
+                        name="year"
+                        className="form-input"
+                        value={formData.year}
+                        onChange={handleChange}
+                        style={{ flex: 1 }}
+                    >
+                        <option value="">Year</option>
+                        {years.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="form-group">

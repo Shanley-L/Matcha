@@ -18,6 +18,8 @@ import CompleteProfile from './pages/CompleteProfile';
 import UploadPhotos from './pages/UploadPhotos';
 import SelectInterests from './pages/SelectInterests';
 import SelectMatch from './pages/SelectMatch';
+import EditProfile from './pages/EditProfile';
+import EditPhoto from './pages/EditPhoto';
 import { UserProvider } from './context/UserContext'; // Importer le UserProvider
 
 const App = () => {
@@ -80,6 +82,16 @@ const App = () => {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/edit-profile" element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/edit-photo" element={
+            <ProtectedRoute>
+              <EditPhoto />
             </ProtectedRoute>
           } />
           <Route path="/viewers" element={

@@ -66,34 +66,47 @@ class UserController:
                         data[key] = json.loads(value)
                     except (json.JSONDecodeError, TypeError):
                         data[key] = value
+
+            # Traiter les photos
             photos_paths = []
+            
+            # Ajouter d'abord les photos existantes dans l'ordre spécifié
+            if 'photos_order' in data:
+                photos_paths.extend(data['photos_order'])
+
+            # Ajouter ensuite les nouvelles photos
             if request.files:
                 files = request.files.getlist('photos')
-                logging.info(f"Processing {len(files)} photos")
+                logging.info(f"Processing {len(files)} new photos")
                 for file in files:
                     if file and UserController.allowed_file(file.filename):
                         file_path = UserController.save_uploaded_file(file, user_id)
                         photos_paths.append(file_path)
-                        logging.info(f"Saved photo: {file_path}")
+                        logging.info(f"Saved new photo: {file_path}")
 
-            logging.info(f"Processed data: {data}")
-            logging.info(f"Photo paths: {photos_paths}")
+            # Mettre à jour la base de données avec toutes les photos dans l'ordre
+            if photos_paths:
+                data['photos'] = json.dumps(photos_paths)
+
+            logging.info(f"Final photo paths: {photos_paths}")
 
             updated_user_id, error = UserModel.update_user(
                 user_id,
+                username=data.get('username'),
                 firstname=data.get('firstname'),
                 birthdate=data.get('birthdate'),
                 country=data.get('country'),
                 gender=data.get('gender'),
                 looking_for=data.get('looking_for'),
                 interests=json.dumps(data.get('interests')) if data.get('interests') else None,
-                photos=json.dumps(photos_paths) if photos_paths else None,
+                photos=data.get('photos'),
                 matchType=data.get('matchType'),
                 is_first_login=data.get('is_first_login'),
                 job=data.get('job'),
                 bio=data.get('bio'),
                 viewers=data.get('viewers')
             )
+
             if updated_user_id:
                 return jsonify({
                     "message": "User profile updated successfully",

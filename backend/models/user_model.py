@@ -92,15 +92,29 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None):
+    def update_user(user_id, username=None, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
+
+            # If interests are being updated, first clear existing interests
+            if interests is not None:
+                clear_interests_sql = "UPDATE users SET interests = NULL WHERE id = %s"
+                cursor.execute(clear_interests_sql, (user_id,))
+                connection.commit()
+            
+            if photos is not None:
+                clear_photos_sql = "UPDATE users SET photos = NULL WHERE id = %s"
+                cursor.execute(clear_photos_sql, (user_id,))
+                connection.commit()
 
             # Construct the update query
             update_fields = []
             params = []
 
+            if username:
+                update_fields.append("username = %s")
+                params.append(username)
             if firstname:
                 update_fields.append("firstname = %s")
                 params.append(firstname)
@@ -116,7 +130,7 @@ class UserModel:
             if looking_for:
                 update_fields.append("looking_for = %s")
                 params.append(looking_for)
-            if interests:
+            if interests is not None:
                 update_fields.append("interests = %s")
                 params.append(interests)
             if photos:

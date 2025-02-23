@@ -103,6 +103,15 @@ h2.profile-header {
     left: 0;
 }
 
+.profile-photos.clickable {
+    cursor: pointer;
+    transition: filter 0.3s ease;
+}
+
+.profile-photos.clickable:hover {
+    filter: brightness(0.5);
+}
+
 .gallery-nav {
     position: absolute;
     top: 50%;
@@ -189,4 +198,53 @@ h2.profile-header {
 .interest p {
     color: white !important;
     margin: 0;
+}
+
+/* Styles de base pour tous les éléments de formulaire */
+input, select, textarea, button {
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.form-input {
+    flex: 1;
+    padding: 0.8rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #f8f8f8;
+    color: #333;
+    outline: none;
+    font-family: inherit;
+}
+
+.form-button {
+    padding: 0.8rem 1.5rem;
+    background-color: #8A2BE2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: inherit;
+}
+
+.continue-button {
+    width: 100%;
+    padding: 1rem;
+    background-color: #8A2BE2;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 2rem;
+    font-family: inherit;
+}
+
+.continue-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }

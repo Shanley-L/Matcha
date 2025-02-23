@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
 import axios from '../config/axios';
@@ -6,9 +7,32 @@ import '../styles/pages/shared.css';
 import '../styles/pages/Profile.css';
 
 const Profile = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+    // Available interests for selection
+    const availableInterests = [
+        { id: 'gaming', name: 'Gaming' },
+        { id: 'dancing_singing', name: 'Dancing & Singing' },
+        { id: 'language', name: 'Language' },
+        { id: 'movie', name: 'Movie' },
+        { id: 'book_novel', name: 'Book & Novel' },
+        { id: 'architecture', name: 'Architecture' },
+        { id: 'photography', name: 'Photography' },
+        { id: 'fashion', name: 'Fashion' },
+        { id: 'writing', name: 'Writing' },
+        { id: 'nature_plant', name: 'Nature & Plant' },
+        { id: 'painting', name: 'Painting' },
+        { id: 'football', name: 'Football' },
+        { id: 'animals', name: 'Animals' },
+        { id: 'people_society', name: 'People & Society' },
+        { id: 'gym_fitness', name: 'Gym & Fitness' },
+        { id: 'food_drink', name: 'Food & Drink' },
+        { id: 'travel_places', name: 'Travel & Places' },
+        { id: 'art', name: 'Art' }
+    ];
 
     const calculateAge = (birthdate) => {
         const birth = new Date(birthdate);
@@ -49,6 +73,10 @@ const Profile = () => {
         }
     };
 
+    const handleEditClick = () => {
+        navigate('/edit-profile');
+    };
+
     if (loading) {
         return (
             <div className="page-container">
@@ -62,6 +90,8 @@ const Profile = () => {
             </div>
         );
     }
+
+    console.log(user);
 
     return (
         <div className="page-container">
@@ -105,16 +135,22 @@ const Profile = () => {
                                 {user.username} {user.firstname}
                                 <span>, {calculateAge(user.birthdate)} ans</span>
                             </h1>
-                            <i className="fa-solid fa-pen-to-square"></i>
+                            <i className="fa-solid fa-pen-to-square" onClick={handleEditClick} style={{ cursor: 'pointer' }}></i>
                         </div>
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
+                        <p>{user.bio}</p>
                         <h2 className="profile-header">Interests</h2>
                         <div className='interest-array'>
                             {user.interests && user.interests.length > 0 ? (
-                                user.interests.map((interest) => (
-                                    <p key={interest} className='interest'>{interest}</p>
-                                ))
+                                user.interests.map((interestId) => {
+                                    const interest = availableInterests.find(i => i.id === interestId);
+                                    return (
+                                        <p key={interestId} className='interest'>
+                                            {interest ? interest.name : interestId}
+                                        </p>
+                                    );
+                                })
                             ) : (
                                 <p>No interest available</p>
                             )}
