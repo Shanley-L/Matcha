@@ -35,3 +35,8 @@ def dislike_user(disliked_user_id):
 @email_verified_required
 def add_test_likes():
     return UserController.add_test_likes()
+
+@user_bp.route('/<int:user_id>/profile', methods=['GET'])
+@email_verified_required
+def get_other_user_profile(user_id):
+    return UserController.get_user_profile_by_id(user_id)

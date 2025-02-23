@@ -21,6 +21,7 @@ import SelectMatch from './pages/SelectMatch';
 import EditProfile from './pages/EditProfile';
 import EditPhoto from './pages/EditPhoto';
 import { UserProvider } from './context/UserContext'; // Importer le UserProvider
+import UsersProfile from './pages/UsersProfile';
 
 const App = () => {
   return (
@@ -99,6 +100,7 @@ const App = () => {
               <Viewers />
             </ProtectedRoute>
           } />
+          <Route path="/user/:userId" element={<UsersProfile />} />
           <Route path="/" element={<Login />} />
           
           {/* Catch-all route - redirect to home if authenticated, login if not */}

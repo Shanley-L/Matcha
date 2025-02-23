@@ -243,3 +243,38 @@ class UserController:
                 'status': 'error',
                 'message': str(e)
             }), 500
+
+    @staticmethod
+    def get_user_profile_by_id(target_user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized by session"}), 401
+
+        # Vérifier que l'utilisateur existe
+        user = UserModel.get_by_id(target_user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Ajouter l'utilisateur actuel aux viewers du profil cible
+        current_user = UserModel.get_by_id(session['user_id'])
+        if current_user:
+            viewers = user.get('viewers', [])
+            if isinstance(viewers, bytes):
+                viewers = json.loads(viewers.decode())
+            elif isinstance(viewers, str):
+                viewers = json.loads(viewers)
+            elif not isinstance(viewers, list):
+                viewers = []
+
+            # Créer un objet viewer avec les informations minimales nécessaires
+            viewer_info = {
+                "id": current_user['id'],
+                "username": current_user['username'],
+                "photo": current_user['photos'][0] if current_user.get('photos') else None
+            }
+
+            # Vérifier si l'utilisateur n'est pas déjà dans la liste des viewers
+            if not any(v.get('id') == current_user['id'] for v in viewers):
+                viewers.append(viewer_info)
+                UserModel.update_user(target_user_id, viewers=json.dumps(viewers))
+
+        return jsonify(user), 200

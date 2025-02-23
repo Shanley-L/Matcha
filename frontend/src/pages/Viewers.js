@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
 import axios from '../config/axios';
@@ -8,6 +9,7 @@ import '../styles/pages/Viewers.css';
 const Viewers = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -24,6 +26,10 @@ const Viewers = () => {
     }, []);
 
     console.log(user)
+
+    const handleVisit = (viewerId) => {
+        navigate(`/user/${viewerId}`);
+    };
 
     if (loading) {
         return (
@@ -55,7 +61,12 @@ const Viewers = () => {
                                         <p>Visited your profile</p>
                                     </div>
                                 </div>
-                                <button className="visit-button">Visit</button>
+                                <button 
+                                    className="visit-button"
+                                    onClick={() => handleVisit(viewer.id)}
+                                >
+                                    Visit
+                                </button>
                             </div>
                         ))
                     ) : (

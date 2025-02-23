@@ -29,7 +29,7 @@ const EditProfile = () => {
     });
 
     // Available interests for selection
-    const availableInterests = [
+    const availableInterests = useMemo(() => [
         { id: 'gaming', name: 'Gaming' },
         { id: 'dancing_singing', name: 'Dancing & Singing' },
         { id: 'language', name: 'Language' },
@@ -48,7 +48,7 @@ const EditProfile = () => {
         { id: 'food_drink', name: 'Food & Drink' },
         { id: 'travel_places', name: 'Travel & Places' },
         { id: 'art', name: 'Art' }
-    ];
+    ], []);
 
     // Arrays for date selection
     const days = Array.from({ length: 31 }, (_, i) => i + 1);
@@ -173,7 +173,7 @@ const EditProfile = () => {
             });
             setSelectedInterests(interestIds);
         }
-    }, [user]);
+    }, [user, availableInterests]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -441,7 +441,7 @@ const EditProfile = () => {
                             ) : (
                                 <>
                                     <h1>
-                                        {user.username} {user.firstname}
+                                        {user.username}, {user.firstname}
                                         <span>, {calculateAge(user.birthdate)} ans</span>
                                     </h1>
                                     <i 

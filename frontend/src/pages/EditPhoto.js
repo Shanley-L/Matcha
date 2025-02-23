@@ -1,6 +1,5 @@
 // UploadPhotos.js
 import React, { useState, useEffect } from 'react';
-import { useUser } from '../context/UserContext'; // Importer le hook pour accéder au contexte
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack, IoAdd } from 'react-icons/io5';
 import axios from '../config/axios';
@@ -11,7 +10,6 @@ const MAX_PHOTOS = 6;
 const EditPhoto = () => {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
 
     useEffect(() => {
