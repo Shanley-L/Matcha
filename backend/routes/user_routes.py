@@ -23,6 +23,14 @@ def update_user_profile():
 def get_potential_matches():
     return UserController.get_potential_matches()
 
+@user_bp.route('/getmatches', methods=['GET'])
+def get_matches_list():
+    return UserController.get_matches_list()
+
+@user_bp.route('/likes', methods=['GET'])
+def get_likes():
+    return UserController.get_likes()
+
 @user_bp.route('/like/<int:liked_user_id>', methods=['POST'])
 def like_user(liked_user_id):
     return UserController.like_user(liked_user_id)

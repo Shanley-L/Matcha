@@ -52,26 +52,23 @@ const SwipeCard = ({ user, onSwipe }) => {
   };
 
   const handlePhotoClick = (photo) => {
-    if (isDragging) return; // Don't open modal if we were dragging
-    
-    if (photo.startsWith('/shared/uploads/')) {
+    if (isDragging) return;
+    if (photo.startsWith('/shared/uploads')) {
       setSelectedPhoto(photo);
     } else {
-      setSelectedPhoto(`/shared/uploads/${photo}`);
+      setSelectedPhoto(`/shared/uploads${photo}`);
     }
   };
 
   const userAge = calculateAge(user.birthdate);
   const photos = typeof user.photos === 'string' ? JSON.parse(user.photos) : user.photos;
   const firstPhoto = photos && photos.length > 0 
-    ? `/shared/uploads/${photos[0]}` 
+    ? `/shared/uploads${photos[0]}` 
     : '/default-avatar.png';
   
   const createProfileSections = () => {
     const sections = [];
     const remainingPhotos = photos ? photos.slice(1) : [];
-
-    // Create content sections
     const contentSections = [];
     if (user.bio) {
       contentSections.push({
@@ -125,7 +122,6 @@ const SwipeCard = ({ user, onSwipe }) => {
       });
     }
 
-    // Interleave content sections with photos
     contentSections.forEach((section, index) => {
       sections.push(
         <div key={`section-${section.key}`}>
@@ -146,7 +142,6 @@ const SwipeCard = ({ user, onSwipe }) => {
       }
     });
 
-    // Add any remaining photos at the end
     if (remainingPhotos.length > contentSections.length) {
       remainingPhotos.slice(contentSections.length).forEach((photo, index) => {
         sections.push(
