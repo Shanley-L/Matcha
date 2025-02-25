@@ -15,14 +15,12 @@ class UserModel:
             job, bio, created_at, viewers FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
-                # Convert bytes to string for JSON fields
                 if user.get('interests') and isinstance(user['interests'], bytes):
                     user['interests'] = json.loads(user['interests'].decode())
                 if user.get('photos') and isinstance(user['photos'], bytes):
                     user['photos'] = json.loads(user['photos'].decode())
                 if user.get('viewers') and isinstance(user['viewers'], bytes):
                     user['viewers'] = json.loads(user['viewers'].decode())
-                # Convert datetime objects to string
                 if user.get('birthdate'):
                     user['birthdate'] = user['birthdate'].isoformat() if user['birthdate'] else None
                 if user.get('created_at'):
@@ -96,19 +94,14 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
-
-            # If interests are being updated, first clear existing interests
             if interests is not None:
                 clear_interests_sql = "UPDATE users SET interests = NULL WHERE id = %s"
                 cursor.execute(clear_interests_sql, (user_id,))
                 connection.commit()
-            
             if photos is not None:
                 clear_photos_sql = "UPDATE users SET photos = NULL WHERE id = %s"
                 cursor.execute(clear_photos_sql, (user_id,))
                 connection.commit()
-
-            # Construct the update query
             update_fields = []
             params = []
 
@@ -151,15 +144,10 @@ class UserModel:
             if viewers:
                 update_fields.append("viewers = %s")
                 params.append(viewers)
-
-            # If no field is provided for update, return error
             if not update_fields:
                 return None, "No fields to update"
-
-            # Construct the SQL query to update the user
             sql = f"UPDATE users SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
             params.append(user_id)
-
             cursor.execute(sql, tuple(params))
             connection.commit()
 
@@ -207,8 +195,6 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
-            
-            # Insert or update the interaction
             query = """
                 INSERT INTO user_interactions (user_id, target_user_id, interaction_type)
                 VALUES (%s, %s, %s)
@@ -218,7 +204,6 @@ class UserModel:
             """
             cursor.execute(query, (user_id, target_user_id, interaction_type))
             connection.commit()
-            
             return True
             
         except mysql.connector.Error as err:
@@ -235,8 +220,6 @@ class UserModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
-            
-            # Check if both users have liked each other
             query = """
                 SELECT COUNT(*) as match_count
                 FROM user_interactions u1
@@ -248,8 +231,7 @@ class UserModel:
                     AND u2.interaction_type = 'like'
             """
             cursor.execute(query, (user1_id, user2_id))
-            result = cursor.fetchone()
-            
+            result = cursor.fetchone()            
             return result[0] > 0
             
         except mysql.connector.Error as err:
@@ -262,7 +244,45 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def get_potential_matches(current_user_id, limit=10, min_age=None, max_age=None):
+    def get_likes_for_user(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT DISTINCT u.id, u.firstname, u.country, u.photos
+                FROM users u
+                JOIN user_interactions ui ON u.id = ui.user_id
+                WHERE ui.target_user_id = %s
+                AND ui.interaction_type = 'like'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM user_interactions ui2
+                    WHERE ui2.user_id = %s
+                    AND ui2.target_user_id = u.id
+                    AND ui2.interaction_type = 'like'
+                )
+                ORDER BY ui.created_at DESC
+            """
+            cursor.execute(query, (user_id, user_id))
+            likes = cursor.fetchall()
+            
+            for like in likes:
+                if like.get('photos') and isinstance(like['photos'], bytes):
+                    like['photos'] = json.loads(like['photos'].decode())
+                
+            return likes
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_likes_for_user: {err}")
+            return []
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def get_potential_matches(current_user_id, min_age=None, max_age=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
@@ -283,22 +303,17 @@ class UserModel:
                     current_user_interests = json.loads(current_user['interests'])
                 else:
                     current_user_interests = current_user['interests']
-            # Build the gender filter based on sexual orientation
             gender_condition = ""
             if current_user['looking_for'] == 'male':
                 gender_condition = "AND gender = 'male'"
             elif current_user['looking_for'] == 'female':
                 gender_condition = "AND gender = 'female'"
-
-            # Add age range filter
             age_condition = ""
             if min_age is not None and max_age is not None:
                 age_condition = """
                     AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) >= %s 
                     AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) <= %s
                 """
-
-            # Get users that haven't been interacted with by the current user
             query = f"""
                 SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests
                 FROM users
@@ -318,11 +333,9 @@ class UserModel:
             
             cursor.execute(query, tuple(params))
             matches = cursor.fetchall()
-            # Process the results and calculate match scores
             processed_matches = []
             for match in matches:
                 processed_match = {}
-                # Process dates and photos
                 for key, value in match.items():
                     if key == 'birthdate' and value:
                         processed_match[key] = value.isoformat()
@@ -337,20 +350,51 @@ class UserModel:
                             processed_match[key] = value
                     else:
                         processed_match[key] = value
-                # Calculate interest match score
                 match_score = 0
                 if processed_match.get('interests'):
                     match_interests = processed_match['interests']
-                    # Calculate score based on common interests
                     common_interests = set(current_user_interests) & set(match_interests)
                     match_score = len(common_interests)
                 processed_match['match_score'] = match_score
                 processed_matches.append(processed_match)
             processed_matches.sort(key=lambda x: x['match_score'], reverse=True)
-            return processed_matches[:limit]
+            return processed_matches
             
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_potential_matches: {err}")
+            return []
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def get_matches_list(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT DISTINCT u.id, u.firstname, u.country, u.photos
+                FROM users u
+                JOIN user_interactions ui1 ON u.id = ui1.user_id
+                JOIN user_interactions ui2 ON u.id = ui2.target_user_id
+                WHERE ui1.target_user_id = %s
+                AND ui2.user_id = %s
+                AND ui1.interaction_type = 'like'
+                AND ui2.interaction_type = 'like'
+                ORDER BY ui1.created_at DESC
+            """
+            cursor.execute(query, (user_id, user_id))
+            matches = cursor.fetchall()
+            for match in matches:
+                if match.get('photos') and isinstance(match['photos'], bytes):
+                    match['photos'] = json.loads(match['photos'].decode())
+                
+            return matches
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_matches_list: {err}")
             return []
         finally:
             if 'cursor' in locals() and cursor:

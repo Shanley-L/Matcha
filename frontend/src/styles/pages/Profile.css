@@ -45,37 +45,6 @@ h2.profile-header {
     font-size: 14px;
 }
 
-.test-likes-button-container {
-    position: fixed;
-    bottom: 70px;
-    /* Position above the navbar */
-    left: 20px;
-    z-index: 100;
-}
-
-.test-likes-button {
-    background: linear-gradient(343deg, rgba(131, 58, 180, 1) 0%, rgba(170, 29, 253, 1) 50%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
-.test-likes-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.test-likes-button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
 
 .photo-gallery-container {
     position: relative;

@@ -15,18 +15,19 @@ const RegisterSchema = Yup.object().shape({
 
 const Register = () => {
     const navigate = useNavigate();
-    const [errorMessage, setErrorMessage] = useState("");  // État pour gérer l'erreur
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleSubmit = async (values) => {
         try {
             await axios.post('/api/auth/register', values);
+            console.log("User registered successfully");
             navigate('/unverified');
         } catch (error) {
             console.log(error);
             if (error.response && error.response.data) {
-                setErrorMessage(error.response.data.message || "Error registering user");  // Affiche le message d'erreur
+                setErrorMessage(error.response.data.message || "Error registering user");
             } else {
-                setErrorMessage("Error registering user");  // Message générique si pas d'erreur spécifique
+                setErrorMessage("Error registering user");
             }
         }
     }

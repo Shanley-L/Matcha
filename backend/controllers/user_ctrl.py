@@ -135,13 +135,10 @@ class UserController:
             if not current_user:
                 return jsonify({"message": "User not found"}), 404
 
-            # Get age range from query parameters
             min_age = request.args.get('min_age', type=int)
             max_age = request.args.get('max_age', type=int)
-
             matches = UserModel.get_potential_matches(
                 current_user_id=session['user_id'],
-                limit=10,  # Number of profiles to return
                 min_age=min_age,
                 max_age=max_age
             )
@@ -245,6 +242,22 @@ class UserController:
             }), 500
 
     @staticmethod
+    def get_likes():
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            # Get users who have liked the current user
+            likes = UserModel.get_likes_for_user(session['user_id'])
+            return jsonify(likes), 200
+        except Exception as e:
+            logging.error(f"Error getting likes: {str(e)}")
+            return jsonify({
+                "error": "Failed to get likes",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
     def get_user_profile_by_id(target_user_id):
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized by session"}), 401
@@ -278,3 +291,17 @@ class UserController:
                 UserModel.update_user(target_user_id, viewers=json.dumps(viewers))
 
         return jsonify(user), 200
+
+    @staticmethod
+    def get_matches_list():
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        try:
+            matches = UserModel.get_matches_list(session['user_id'])
+            return jsonify(matches), 200
+        except Exception as e:
+            logging.error(f"Error getting matches list: {str(e)}")
+            return jsonify({
+                "error": "Failed to get matches list",
+                "details": str(e)
+            }), 400
