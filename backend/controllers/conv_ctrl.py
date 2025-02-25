@@ -1,8 +1,10 @@
-from flask_socketio import join_room, send
-from flask import request, jsonify
+from flask_socketio import join_room, send, emit
+from flask import request, jsonify, session
 from models.conv_model import ConversationModel
 from models.msg_model import MessageModel
+from models.user_model import UserModel
 from app import socketio
+import logging
 
 class ConversationController:
     @staticmethod
@@ -13,20 +15,68 @@ class ConversationController:
         send(f"User joined conversation {conversation_id}", to=str(conversation_id))
 
     @staticmethod
-    def send_message():
-        data = request.json
-        conversation_id = data.get('conversation_id')
-        sender_id = data.get('sender_id')
-        content = data.get('content')
+    def list_conversations():
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        conversations = ConversationModel.get_conversations(session['user_id'])
+        logging.error("conversations: " + str(conversations))
+        return jsonify(conversations)
 
-        if not conversation_id or not sender_id or not content:
-            return jsonify({"error": "All fields are required"}), 400
+    @staticmethod
+    def get_messages(conversation_id):
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
 
-        message = MessageModel.create(conversation_id, sender_id, content)
+        # Verify user is part of the conversation
+        conversations = ConversationModel.get_conversations(session['user_id'])
+        if not any(str(conv['id']) == str(conversation_id) for conv in conversations):
+            return jsonify({'error': 'Unauthorized access to conversation'}), 403
+
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        messages = ConversationModel.get_messages(conversation_id, limit, offset)
+        return jsonify(messages)
+
+    @staticmethod
+    def send_message(conversation_id):
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        # Verify user is part of the conversation
+        conversations = ConversationModel.get_conversations(session['user_id'])
+        if not any(str(conv['id']) == str(conversation_id) for conv in conversations):
+            return jsonify({'error': 'Unauthorized access to conversation'}), 403
+
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'error': 'Message content is required'}), 400
+
+        message = ConversationModel.add_message(conversation_id, session['user_id'], data['message'])
         if message:
-            socketio.emit('message', message, to=str(conversation_id))
-            return jsonify({"message": "Message sent"}), 201
-        return jsonify({"error": "Failed to send message"}), 500
+            # Emit the message to all users in the conversation
+            emit('new_message', {
+                'conversation_id': conversation_id,
+                'message': message
+            }, room=f'conversation_{conversation_id}', namespace='/chat')
+            return jsonify(message)
+        return jsonify({'error': 'Failed to send message'}), 500
+
+    @staticmethod
+    def get_or_create_conversation(user_id):
+        if 'user_id' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        # Verify users can chat (they matched)
+        if not UserModel.can_users_chat(session['user_id'], user_id):
+            return jsonify({'error': 'Users must match before chatting'}), 403
+
+        conversation_id = ConversationModel.get_or_create(session['user_id'], user_id)
+        if conversation_id:
+            conversations = ConversationModel.get_conversations(session['user_id'])
+            conversation = next((conv for conv in conversations if conv['id'] == conversation_id), None)
+            return jsonify(conversation)
+        return jsonify({'error': 'Failed to create conversation'}), 500
 
     @staticmethod
     def create_conversation():

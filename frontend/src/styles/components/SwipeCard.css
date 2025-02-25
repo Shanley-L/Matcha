@@ -271,4 +271,15 @@
   background-color: #14dce2;
   color: white;
   transform: scale(1.05);
+}
+
+/* Remove unused styles */
+.card-actions,
+.action-button,
+.action-button:hover,
+.action-button.like,
+.action-button.like:hover,
+.action-button.dislike,
+.action-button.dislike:hover {
+  display: none;
 } 

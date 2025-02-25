@@ -2,8 +2,8 @@ import os
 from flask_mail import Mail
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
-from flask_socketio import SocketIO
 import logging
+from socket_manager import socketio  # Import the socketio instance
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,15 +22,31 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'shared
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 mail = Mail(app)
-CORS(app, supports_credentials=True)
+CORS(app, 
+     supports_credentials=True,
+     resources={
+         r"/*": {
+             "origins": ["http://localhost:3000"],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization"],
+             "expose_headers": ["Content-Range", "X-Content-Range"],
+             "supports_credentials": True
+         }
+     })
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+# Initialize Socket.IO with the Flask app
+socketio.init_app(app, 
+                 cors_allowed_origins=["http://localhost:3000"],
+                 async_mode='gevent',
+                 ping_timeout=60,
+                 ping_interval=25,
+                 always_connect=True)
 
 from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
 from routes.conv_routes import conv_bp
 
-# Enregistrer les routes
+# Register routes
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(user_bp, url_prefix='/api/user')
 app.register_blueprint(conv_bp, url_prefix='/api/conv')
@@ -40,17 +56,17 @@ app.register_blueprint(conv_bp, url_prefix='/api/conv')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# Route de santé (Health Check)
+# Route to Health Check
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"}), 200
 
-# Gestion des erreurs globales
+# Global error handling
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({"error": "Not Found"}), 404
 
-# Gestion des erreurs serveur
+# Server error handling
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({"error": "Internal Server Error"}), 500
@@ -61,7 +77,5 @@ def internal_error(error):
 #     for rule in app.url_map.iter_rules():
 #         print(rule)
 
-
 if __name__ == '__main__':
-    # Créer le dossier assets/usersPictures s'il n'existe pas
-    socketio.run(app, debug=True, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)

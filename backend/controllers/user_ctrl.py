@@ -164,9 +164,29 @@ class UserController:
             if success:
                 # Check if it's a match (both users liked each other)
                 is_match = UserModel.check_match(session['user_id'], liked_user_id)
+                
+                if is_match:
+                    # Create a conversation for the matched users
+                    from models.conv_model import ConversationModel
+                    conversation_id = ConversationModel.get_or_create(session['user_id'], liked_user_id)
+                    
+                    # Get user details for notification
+                    current_user = UserModel.get_by_id(session['user_id'])
+                    
+                    # Emit match notification via Socket.IO
+                    from app import socketio
+                    socketio.emit('new_notification', {
+                        'type': 'match',
+                        'data': {
+                            'message': f"You matched with {current_user['firstname']}!",
+                            'conversation_id': conversation_id
+                        }
+                    }, room=f"user_{liked_user_id}")
+                
                 return jsonify({
                     "message": "Like recorded successfully",
-                    "is_match": is_match
+                    "is_match": is_match,
+                    "conversation_id": conversation_id if is_match else None
                 }), 200
             else:
                 return jsonify({"message": "Failed to record like"}), 400

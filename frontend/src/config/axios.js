@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-const axiosInstance = axios.create({
+const instance = axios.create({
     baseURL: 'http://localhost:5000',
-    withCredentials: true // Permet d'envoyer les cookies avec chaque requête
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
-export default axiosInstance;
+export default instance;

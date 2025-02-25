@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { FaRedo } from 'react-icons/fa';
 import PhotoModal from './PhotoModal';
 import '../styles/components/SwipeCard.css';
+import axios from '../config/axios';
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const SwipeCard = ({ user, onSwipe }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -11,12 +14,13 @@ const SwipeCard = ({ user, onSwipe }) => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-30, 30]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const navigate = useNavigate();
 
-  const handleDragStart = () => {
+  const handleDragStart = useCallback(() => {
     setIsDragging(true);
-  };
+  }, []);
 
-  const handleDragEnd = (event, info) => {
+  const handleDragEnd = useCallback((event, info) => {
     const swipeThreshold = 100;
     if (Math.abs(info.offset.x) > swipeThreshold) {
       const direction = info.offset.x > 0 ? 'right' : 'left';
@@ -24,6 +28,24 @@ const SwipeCard = ({ user, onSwipe }) => {
       x.set(swipeOutX);
       setTimeout(() => {
         onSwipe(direction, user.id);
+        // If it's a right swipe, also handle the like
+        if (direction === 'right') {
+          // Make the API call to like the user
+          axios.post(`/api/user/like/${user.id}`)
+            .then(response => {
+              if (response.data.is_match) {
+                toast.success(`You matched with ${user.firstname}!`);
+                // If a conversation was created, navigate to chats
+                if (response.data.conversation_id) {
+                  navigate('/chats');
+                }
+              }
+            })
+            .catch(error => {
+              console.error('Error liking user:', error);
+              toast.error('Failed to like user');
+            });
+        }
       }, 200);
     } else {
       x.set(0);
@@ -32,9 +54,9 @@ const SwipeCard = ({ user, onSwipe }) => {
     setTimeout(() => {
       setIsDragging(false);
     }, 100);
-  };
+  }, [onSwipe, user.id, x, user.firstname, navigate]);
 
-  const calculateAge = (birthdate) => {
+  const calculateAge = useCallback((birthdate) => {
     if (!birthdate) return null;
     const today = new Date();
     const birthDate = new Date(birthdate);
@@ -44,32 +66,38 @@ const SwipeCard = ({ user, onSwipe }) => {
       age--;
     }
     return age;
-  };
+  }, []);
 
-  const handleFlip = (e) => {
+  const handleFlip = useCallback((e) => {
     e.stopPropagation();
-    setIsFlipped(!isFlipped);
-  };
+    setIsFlipped(prev => !prev);
+  }, []);
 
-  const handlePhotoClick = (photo) => {
+  const handlePhotoClick = useCallback((photo) => {
     if (isDragging) return;
     if (photo.startsWith('/shared/uploads')) {
       setSelectedPhoto(photo);
     } else {
       setSelectedPhoto(`/shared/uploads${photo}`);
     }
-  };
+  }, [isDragging]);
 
-  const userAge = calculateAge(user.birthdate);
-  const photos = typeof user.photos === 'string' ? JSON.parse(user.photos) : user.photos;
-  const firstPhoto = photos && photos.length > 0 
-    ? `/shared/uploads${photos[0]}` 
-    : '/default-avatar.png';
+  const userAge = useMemo(() => calculateAge(user.birthdate), [user.birthdate, calculateAge]);
+  const photos = useMemo(() => 
+    typeof user.photos === 'string' ? JSON.parse(user.photos) : user.photos
+  , [user.photos]);
   
-  const createProfileSections = () => {
+  const firstPhoto = useMemo(() => 
+    photos && photos.length > 0 
+      ? `/shared/uploads${photos[0]}` 
+      : '/default-avatar.png'
+  , [photos]);
+
+  const createProfileSections = useCallback(() => {
     const sections = [];
     const remainingPhotos = photos ? photos.slice(1) : [];
     const contentSections = [];
+
     if (user.bio) {
       contentSections.push({
         key: 'bio',
@@ -95,13 +123,17 @@ const SwipeCard = ({ user, onSwipe }) => {
     }
 
     if (user.interests) {
+      const interests = typeof user.interests === 'string' 
+        ? JSON.parse(user.interests) 
+        : user.interests;
+
       contentSections.push({
         key: 'interests',
         content: (
           <div key="interests-section" className="profile-section">
             <h3>Interests</h3>
             <div className="interests-list">
-              {(typeof user.interests === 'string' ? JSON.parse(user.interests) : user.interests).map((interest, index) => (
+              {interests.map((interest, index) => (
                 <span key={`interest-${index}`} className="interest-tag">{interest}</span>
               ))}
             </div>
@@ -158,7 +190,7 @@ const SwipeCard = ({ user, onSwipe }) => {
     }
 
     return sections;
-  };
+  }, [user.bio, user.job, user.interests, user.country, photos, handlePhotoClick]);
 
   return (
     <>
