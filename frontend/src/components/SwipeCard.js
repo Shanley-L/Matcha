@@ -7,15 +7,20 @@ import '../styles/components/SwipeCard.css';
 const SwipeCard = ({ user, onSwipe }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-30, 30]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
 
   const handleDragEnd = (event, info) => {
     const swipeThreshold = 100;
     if (Math.abs(info.offset.x) > swipeThreshold) {
       const direction = info.offset.x > 0 ? 'right' : 'left';
-      const swipeOutX = info.offset.x > 0 ? 1000 : -1000;
+      const swipeOutX = info.offset.x > 0 ? 2000 : -2000;
       x.set(swipeOutX);
       setTimeout(() => {
         onSwipe(direction, user.id);
@@ -23,6 +28,10 @@ const SwipeCard = ({ user, onSwipe }) => {
     } else {
       x.set(0);
     }
+    // Reset dragging state after a short delay to prevent click event from firing
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 100);
   };
 
   const calculateAge = (birthdate) => {
@@ -43,6 +52,8 @@ const SwipeCard = ({ user, onSwipe }) => {
   };
 
   const handlePhotoClick = (photo) => {
+    if (isDragging) return; // Don't open modal if we were dragging
+    
     if (photo.startsWith('/shared/uploads/')) {
       setSelectedPhoto(photo);
     } else {
@@ -161,6 +172,7 @@ const SwipeCard = ({ user, onSwipe }) => {
         drag={!isFlipped ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
         style={{ x, rotate: isFlipped ? 0 : rotate, opacity }}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         whileTap={{ cursor: 'grabbing' }}
         initial={{ scale: 0.95, opacity: 0 }}
