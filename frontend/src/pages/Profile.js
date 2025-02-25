@@ -132,7 +132,7 @@ const Profile = () => {
                     <div className="profile-info">
                         <div className="profile-header">
                             <h1>
-                                {user.username} {user.firstname}
+                                {user.firstname}
                                 <span>, {calculateAge(user.birthdate)} ans</span>
                             </h1>
                             <i className="fa-solid fa-pen-to-square" onClick={handleEditClick} style={{ cursor: 'pointer' }}></i>

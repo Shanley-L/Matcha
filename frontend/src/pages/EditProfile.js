@@ -19,13 +19,13 @@ const EditProfile = () => {
     
     // Form states
     const [formData, setFormData] = useState({
-        username: '',
         firstname: '',
         day: '',
         month: '',
         year: '',
         job: '',
         country: '',
+        bio: ''
     });
 
     // Available interests for selection
@@ -148,13 +148,13 @@ const EditProfile = () => {
         if (user) {
             const birthDate = user.birthdate ? new Date(user.birthdate) : null;
             setFormData({
-                username: user.username || '',
                 firstname: user.firstname || '',
                 day: birthDate ? birthDate.getDate().toString() : '',
                 month: birthDate ? months[birthDate.getMonth()] : '',
                 year: birthDate ? birthDate.getFullYear().toString() : '',
                 job: user.job || '',
                 country: user.country || '',
+                bio: user.bio || ''
             });
         }
     }, [user, months]);
@@ -195,7 +195,7 @@ const EditProfile = () => {
 
     const handleSaveProfile = async () => {
         try {
-            if (!formData.username || !formData.firstname || !formData.day || !formData.month || !formData.year) {
+            if (!formData.firstname || !formData.day || !formData.month || !formData.year) {
                 alert('Please fill in all required fields');
                 return;
             }
@@ -204,7 +204,6 @@ const EditProfile = () => {
             const birthdate = `${formData.year}-${(monthIndex + 1).toString().padStart(2, '0')}-${formData.day.toString().padStart(2, '0')}`;
             
             const formDataToSend = new FormData();
-            formDataToSend.append('username', formData.username.trim());
             formDataToSend.append('firstname', formData.firstname.trim());
             formDataToSend.append('birthdate', birthdate);
 
@@ -213,7 +212,6 @@ const EditProfile = () => {
             if (response.data) {
                 setUser(prev => ({
                     ...prev,
-                    username: formData.username,
                     firstname: formData.firstname,
                     birthdate: birthdate
                 }));
@@ -227,7 +225,7 @@ const EditProfile = () => {
 
     const handleSaveAbout = async () => {
         try {
-            if (!formData.job && !formData.country) {
+            if (!formData.job && !formData.country && !formData.bio) {
                 alert('Please fill in at least one field');
                 return;
             }
@@ -235,6 +233,7 @@ const EditProfile = () => {
             const formDataToSend = new FormData();
             if (formData.job?.trim()) formDataToSend.append('job', formData.job.trim());
             if (formData.country?.trim()) formDataToSend.append('country', formData.country.trim());
+            if (formData.bio?.trim()) formDataToSend.append('bio', formData.bio.trim());
 
             const response = await axios.put('/api/user/update', formDataToSend);
             
@@ -242,7 +241,8 @@ const EditProfile = () => {
                 setUser(prev => ({
                     ...prev,
                     job: formData.job?.trim() || prev.job,
-                    country: formData.country?.trim() || prev.country
+                    country: formData.country?.trim() || prev.country,
+                    bio: formData.bio?.trim() || prev.bio
                 }));
                 setIsEditingAbout(false);
             }
@@ -384,14 +384,6 @@ const EditProfile = () => {
                                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                         <input
                                             type="text"
-                                            name="username"
-                                            value={formData.username}
-                                            onChange={handleInputChange}
-                                            placeholder="Username"
-                                            style={formStyles.input}
-                                        />
-                                        <input
-                                            type="text"
                                             name="firstname"
                                             value={formData.firstname}
                                             onChange={handleInputChange}
@@ -441,7 +433,7 @@ const EditProfile = () => {
                             ) : (
                                 <>
                                     <h1>
-                                        {user.username}, {user.firstname}
+                                        {user.firstname}
                                         <span>, {calculateAge(user.birthdate)} ans</span>
                                     </h1>
                                     <i 
@@ -453,9 +445,9 @@ const EditProfile = () => {
                             )}
                         </div>
 
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'space-between',
                             width: '100%',
                             marginBottom: '1rem'
@@ -469,7 +461,7 @@ const EditProfile = () => {
                                 ></i>
                             )}
                         </div>
-                        
+
                         {isEditingAbout ? (
                             <div style={{ width: '100%' }}>
                                 <div style={formStyles.formHeader}>
@@ -496,11 +488,24 @@ const EditProfile = () => {
                                         placeholder="Country"
                                         style={formStyles.input}
                                     />
-                                    <button onClick={handleSaveAbout} style={formStyles.button}>Save</button>
                                 </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                                    <input
+                                        type="text"
+                                        name="bio"
+                                        value={formData.bio}
+                                        onChange={handleInputChange}
+                                        placeholder="Bio"
+                                        style={formStyles.input}
+                                    />
+                                </div>
+                                <button onClick={handleSaveAbout} style={formStyles.button}>Save</button>
                             </div>
                         ) : (
-                            <p>{user.job}, {user.country}</p>
+                            <>
+                                <p>{user.job}, {user.country}</p>
+                                <p>{user.bio}</p>
+                            </>
                         )}
 
                         <div style={{ 
