@@ -3,6 +3,7 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import axios from '../config/axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useWhoAmI } from '../context/WhoAmIContext';
 import '../styles/auth.css';
 import '../styles/components/logo.css'
 import '../styles/components/button.css'
@@ -15,6 +16,7 @@ const Loginschema = Yup.object().shape({
 const Login = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
+    const { refetchMe } = useWhoAmI();
 
     const handleSubmit = async (values) => {
         try {
@@ -22,6 +24,10 @@ const Login = () => {
             const { user } = response.data; // Supposons que l'API retourne un objet utilisateur
             
             console.log("User: ", user);
+            
+            // Update the authentication context
+            await refetchMe();
+            
             if (user.is_first_login) {
                 console.log("First login");
                 navigate('/select-country'); // Première étape après la connexion

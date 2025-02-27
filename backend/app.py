@@ -4,6 +4,15 @@ from flask import Flask, jsonify, send_from_directory, session
 from flask_cors import CORS
 from flask_socketio import SocketIO, disconnect
 import logging
+import json
+from datetime import datetime
+
+# Custom JSON encoder to handle datetime objects
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,10 +30,13 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('EMAIL_USER')
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'shared/uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Use custom JSON encoder
+app.json_encoder = CustomJSONEncoder
+
 mail = Mail(app)
 CORS(app, supports_credentials=True)
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", json=json)
 
 # Socket authentication middleware
 @socketio.on('connect')

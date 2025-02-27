@@ -5,6 +5,13 @@ from models.msg_model import MessageModel
 from models.user_model import UserModel
 from app import socketio
 import logging
+import json
+from datetime import datetime
+
+def json_serializable(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 class ConversationController:
     @staticmethod
@@ -43,10 +50,12 @@ class ConversationController:
         conversations = ConversationModel.get_conversations(session['user_id'])
         if not any(str(conv['id']) == str(conversation_id) for conv in conversations):
             return jsonify({'error': 'Unauthorized access to conversation'}), 403
+        logging.error("TEEEEEEEEST")
 
         limit = request.args.get('limit', 50, type=int)
         offset = request.args.get('offset', 0, type=int)
         messages = ConversationModel.get_messages(conversation_id, limit, offset)
+        logging.error("messages: " + str(messages))
         return jsonify(messages)
 
     @staticmethod
@@ -56,30 +65,40 @@ class ConversationController:
             conversations = ConversationModel.get_conversations(session['user_id'])
             if not any(str(conv['id']) == str(conversation_id) for conv in conversations):
                 return jsonify({'error': 'Unauthorized access to conversation'}), 403
-
             data = request.get_json()
             if not data or 'message' not in data:
                 return jsonify({'error': 'Message content is required'}), 400
-
             message = ConversationModel.add_message(conversation_id, session['user_id'], data['message'])
+            logging.error("message: " + str(message))
             if message:
                 # Get sender info for the message
                 sender = UserModel.get_by_id(session['user_id'])
                 
-                # Emit the message to all users in the conversation
-                emit('new_message', {
+                # Prepare message data for socket emission
+                socket_message = {
                     'type': 'message',
                     'conversation_id': str(conversation_id),
-                    'message': message,
-                    'sender': {
-                        'id': sender['id'],
-                        'username': sender['username'],
-                        'firstname': sender['firstname']
-                    },
-                    'timestamp': message.get('sent_at', '').isoformat() if message.get('sent_at') else None
-                }, room=str(conversation_id))
+                    'message': {
+                        'id': message.get('id'),
+                        'sender': {
+                            'id': sender['id'],
+                            'username': sender.get('username', ''),
+                            'firstname': sender.get('firstname', '')
+                        },
+                        'message': message.get('message', ''),
+                        'created_at': message.get('created_at')  # No need to call isoformat() as it's already a string
+                    }
+                }
                 
-                return jsonify(message)
+                # Use socketio instance to emit the message
+                # We can't use skip_sid in a regular HTTP route, so we'll rely on client-side deduplication
+                room = str(conversation_id)
+                socketio.emit('new_message', socket_message, room=room)
+                
+                # Prepare message for JSON response
+                response_message = dict(message)
+                
+                return jsonify(response_message)
             return jsonify({'error': 'Failed to send message'}), 500
         except Exception as e:
             logging.error(f"Error in send_message: {str(e)}")
@@ -143,12 +162,13 @@ class ConversationController:
             if not any(str(conv['id']) == str(conversation_id) for conv in conversations):
                 return {'error': 'Unauthorized access to conversation'}
             
-            # Emit typing status to conversation room
-            emit('typing_status', {
+            # Use socketio instance to emit typing status
+            socketio.emit('typing_status', {
                 'type': 'typing',
                 'user_id': session['user_id'],
                 'is_typing': is_typing,
-                'conversation_id': str(conversation_id)
+                'conversation_id': str(conversation_id),
+                'timestamp': datetime.now().isoformat()
             }, room=str(conversation_id))
             
             return {'status': 'success'}

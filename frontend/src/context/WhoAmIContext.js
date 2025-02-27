@@ -70,6 +70,8 @@ export const WhoAmIProvider = ({ children }) => {
         try {
             setLoading(true);
             console.log('Fetching user data...');
+            
+            // Check if the user is authenticated
             const response = await axios.get('/api/auth/whoami');
             console.log('User data fetched successfully');
             setMe(response.data);
@@ -96,6 +98,7 @@ export const WhoAmIProvider = ({ children }) => {
     // Manual refetch that resets the fetchAttempted flag
     const refetchMe = useCallback(async () => {
         fetchAttemptedRef.current = false;
+        
         try {
             setLoading(true);
             console.log('Refetching user data...');

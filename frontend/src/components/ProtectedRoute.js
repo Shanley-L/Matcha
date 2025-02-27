@@ -8,6 +8,11 @@ const ProtectedRoute = ({ children }) => {
     const { me, loading, error } = useWhoAmI();
     const location = useLocation();
 
+    // If still loading, show loading indicator
+    if (loading) {
+        return <div className="loading">Loading...</div>;
+    }
+
     // If it's a public route, allow access
     if (PUBLIC_ROUTES.some(route => location.pathname.startsWith(route))) {
         // If user is authenticated, redirect them away from auth pages
@@ -24,11 +29,7 @@ const ProtectedRoute = ({ children }) => {
         return children;
     }
 
-    if (loading) {
-        return <div className="loading">Loading...</div>; // Simple loading indicator
-    }
-
-    // If there's an error or no user data for protected routes, redirect to login
+    // For protected routes, check if user is authenticated
     if (error || !me) {
         return <Navigate to="/login" replace />;
     }

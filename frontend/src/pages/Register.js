@@ -3,6 +3,7 @@ import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import axios from '../config/axios';
 import { useNavigate, Link } from 'react-router-dom';
+import { useWhoAmI } from '../context/WhoAmIContext';
 import '../styles/auth.css';
 import '../styles/components/logo.css'
 import '../styles/components/button.css'
@@ -16,11 +17,25 @@ const RegisterSchema = Yup.object().shape({
 const Register = () => {
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState("");
+    const { refetchMe } = useWhoAmI();
 
     const handleSubmit = async (values) => {
         try {
             await axios.post('/api/auth/register', values);
             console.log("User registered successfully");
+            
+            // Try to login automatically after registration
+            try {
+                await axios.post('/api/auth/login', {
+                    email: values.email,
+                    password: values.password
+                });
+                // Update authentication context
+                await refetchMe();
+            } catch (loginError) {
+                console.log("Auto-login failed after registration:", loginError);
+            }
+            
             navigate('/unverified');
         } catch (error) {
             console.log(error);

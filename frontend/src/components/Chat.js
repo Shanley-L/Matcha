@@ -9,9 +9,21 @@ const Chat = ({ conversationId, otherUser }) => {
     const [loading, setLoading] = useState(true);
     const [isTyping, setIsTyping] = useState(false);
     const [otherUserTyping, setOtherUserTyping] = useState(false);
+    const [sendingMessage, setSendingMessage] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const processedMessageIdsRef = useRef(new Set());
     const { socket, me } = useWhoAmI();
+
+    // Debug function to log messages state
+    useEffect(() => {
+        console.log('Messages state updated:', messages.map(m => ({
+            id: m.id,
+            content: m.content.substring(0, 20) + (m.content.length > 20 ? '...' : ''),
+            sender_id: m.sender_id,
+            messageKey: m.messageKey
+        })));
+    }, [messages]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -21,10 +33,33 @@ const Chat = ({ conversationId, otherUser }) => {
     useEffect(() => {
         const fetchMessages = async () => {
             try {
+                setLoading(true);
+                // Reset the processed message IDs when conversation changes
+                processedMessageIdsRef.current = new Set();
+                
                 const response = await axios.get(`/api/conv/${conversationId}/messages`);
-                setMessages(response.data);
+                console.log('Fetched messages:', response.data);
+                
+                // Transform messages if needed to match our component's expected format
+                const formattedMessages = response.data.map(msg => ({
+                    id: msg.id,
+                    sender_id: msg.sender?.id || msg.sender_id,
+                    content: msg.message || msg.content,
+                    sent_at: msg.created_at || msg.sent_at,
+                    messageKey: `server-${msg.id || Math.random().toString(36).substr(2, 9)}`
+                }));
+                
+                // Add all message IDs to the processed set
+                formattedMessages.forEach(msg => {
+                    if (msg.id) {
+                        processedMessageIdsRef.current.add(msg.id);
+                    }
+                });
+                
+                setMessages(formattedMessages);
                 setLoading(false);
-                scrollToBottom();
+                // Use setTimeout to ensure DOM is updated before scrolling
+                setTimeout(scrollToBottom, 100);
             } catch (error) {
                 console.error('Error fetching messages:', error);
                 setLoading(false);
@@ -32,57 +67,132 @@ const Chat = ({ conversationId, otherUser }) => {
         };
 
         if (conversationId) {
+            // Use a flag to prevent duplicate API calls
+            const controller = new AbortController();
             fetchMessages();
+            return () => controller.abort();
         }
     }, [conversationId]);
 
     // Socket event handlers
     useEffect(() => {
-        if (!socket) {
-            console.log('Socket not available for chat');
+        if (!socket || !conversationId || !me?.id) {
+            console.log('Socket not available for chat or missing required data');
             return;
         }
         
-        if (conversationId) {
-            console.log(`Joining conversation room: ${conversationId}`);
-            // Join the conversation room
-            socket.emit('join', { conversation_id: conversationId });
+        // Create a flag to track if we've already joined this room
+        let hasJoined = false;
+        
+        // Clean up any existing listeners before setting up new ones
+        socket.off('new_message');
+        socket.off('typing_status');
+        
+        console.log(`Joining conversation room: ${conversationId}`);
+        socket.emit('join', { conversation_id: conversationId });
+        hasJoined = true;
 
-            // Listen for new messages
-            socket.on('new_message', (data) => {
-                if (data.conversation_id === conversationId) {
-                    setMessages(prev => [...prev, data.message]);
-                    scrollToBottom();
+        // Listen for new messages
+        const handleNewMessage = (data) => {
+            console.log('New message received via socket:', data);
+            if (data.conversation_id === conversationId.toString()) {
+                // Format the message to match our component's expected format
+                const newMsg = {
+                    id: data.message?.id,
+                    sender_id: data.message?.sender?.id || data.message?.sender_id || data.sender?.id,
+                    content: data.message?.message || data.message?.content || data.content,
+                    sent_at: data.message?.created_at || data.message?.sent_at || data.timestamp || data.sent_at,
+                    messageKey: `socket-${data.message?.id || Math.random().toString(36).substr(2, 9)}`
+                };
+                
+                console.log('Formatted message:', newMsg);
+                console.log('Message ID:', newMsg.id);
+                console.log('Processed IDs:', Array.from(processedMessageIdsRef.current));
+                
+                // Skip if we've already processed this message ID
+                if (newMsg.id && processedMessageIdsRef.current.has(newMsg.id)) {
+                    console.log('Already processed message ID, skipping:', newMsg.id);
+                    return;
                 }
-            });
-
-            // Listen for typing status
-            socket.on('typing_status', (data) => {
-                if (data.conversation_id === conversationId && data.user_id !== me.id) {
-                    setOtherUserTyping(data.is_typing);
+                
+                // Add to processed set if it has an ID
+                if (newMsg.id) {
+                    processedMessageIdsRef.current.add(newMsg.id);
+                    console.log('Added message ID to processed set:', newMsg.id);
                 }
-            });
+                // Check if this message is already in our state
+                setMessages(prev => {
+                    // More robust duplicate detection
+                    const isDuplicate = prev.some(msg => {
+                        // Check by ID if available
+                        if (newMsg.id && msg.id === newMsg.id) {
+                            console.log('Duplicate detected by ID:', newMsg.id);
+                            return true;
+                        }
+                        // Check by content, sender and approximate time
+                        if (msg.content === newMsg.content && 
+                            msg.sender_id === newMsg.sender_id) {
+                            // If sent within 60 seconds, consider it a duplicate
+                            const msgTime = new Date(msg.sent_at || new Date());
+                            const newMsgTime = new Date(newMsg.sent_at || new Date());
+                            const timeDiff = Math.abs(msgTime - newMsgTime);
+                            if (timeDiff < 1000) { // 10 seconds
+                                console.log('Duplicate detected by content and sender within 10s');
+                                return true;
+                            }
+                        }
+                        
+                        return false;
+                    });
+                    
+                    if (isDuplicate) {
+                        console.log('Message already exists, not adding duplicate');
+                        return prev;
+                    }
+                    
+                    console.log('Adding new message to state');
+                    const newMessages = [...prev, newMsg];
+                    setTimeout(scrollToBottom, 100);
+                    return newMessages;
+                });
+            }
+        };
+        // Listen for typing status
+        const handleTypingStatus = (data) => {
+            console.log('Typing status received:', data);
+            if (data.conversation_id === conversationId.toString() && data.user_id !== me.id) {
+                setOtherUserTyping(data.is_typing);
+            }
+        };
 
-            return () => {
+        // Add event listeners
+        console.log('Setting up socket event listeners');
+        socket.on('new_message', handleNewMessage);
+        socket.on('typing_status', handleTypingStatus);
+
+        return () => {
+            console.log(`Cleaning up socket event listeners for conversation: ${conversationId}`);
+            socket.off('new_message', handleNewMessage);
+            socket.off('typing_status', handleTypingStatus);
+            
+            // Only leave if we joined
+            if (hasJoined) {
                 console.log(`Leaving conversation room: ${conversationId}`);
-                socket.off('new_message');
-                socket.off('typing_status');
-            };
-        }
+                socket.emit('leave_conversation', { conversation_id: conversationId });
+            }
+        };
     }, [socket, conversationId, me?.id]);
 
     // Handle typing status
     const handleTyping = () => {
-        if (!socket || !isTyping) {
+        if (!socket) return;
+        if (!isTyping) {
             setIsTyping(true);
-            if (socket) {
-                socket.emit('typing', {
-                    conversation_id: conversationId,
-                    is_typing: true
-                });
-            }
+            socket.emit('typing', {
+                conversation_id: conversationId,
+                is_typing: true
+            });
         }
-
         // Clear existing timeout
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
@@ -102,15 +212,44 @@ const Chat = ({ conversationId, otherUser }) => {
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if (!newMessage.trim()) return;
-
-        try {
-            await axios.post(`/api/conv/${conversationId}/messages`, {
-                message: newMessage.trim()
+        if (!newMessage.trim() || !conversationId || sendingMessage) return;   
+        const messageContent = newMessage.trim();
+        
+        // Clear the input field immediately
+        setNewMessage('');
+        
+        // Reset typing status
+        if (isTyping) {
+            setIsTyping(false);
+            socket.emit('typing', {
+                conversation_id: conversationId,
+                is_typing: false
             });
-            setNewMessage('');
+        }
+        
+        try {
+            setSendingMessage(true);
+            const response = await axios.post(`/api/conv/${conversationId}/messages`, {
+                message: messageContent
+            });
+            
+            // Store the server-assigned message ID to help with deduplication
+            const serverMessageId = response.data.id;
+            if (serverMessageId) {
+                processedMessageIdsRef.current.add(serverMessageId);
+                console.log('Added message ID to processed set:', serverMessageId);
+            }
+            
+            // We don't need to add the message to the UI here
+            // The socket will receive the message and add it to the UI
+            console.log('Message sent successfully, waiting for socket update');
+            
         } catch (error) {
             console.error('Error sending message:', error);
+            // Show error to user
+            alert('Failed to send message. Please try again.');
+        } finally {
+            setSendingMessage(false);
         }
     };
 
@@ -136,20 +275,32 @@ const Chat = ({ conversationId, otherUser }) => {
             </div>
 
             <div className="chat-messages">
-                {messages.map((message) => (
-                    <div
-                        key={message.id}
-                        className={`message ${message.sender_id === me?.id ? 'sent' : 'received'}`}
-                    >
-                        <div className="message-content">{message.content}</div>
-                        <div className="message-time">
-                            {new Date(message.sent_at).toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            })}
-                        </div>
+                {messages.length === 0 ? (
+                    <div className="no-messages">
+                        No messages yet. Start the conversation!
                     </div>
-                ))}
+                ) : (
+                    messages.map((message, index) => (
+                        <div
+                            key={message.messageKey || message.id || message.tempId || `msg-${index}-${Math.random().toString(36).substr(2, 9)}`}
+                            className={`message ${message.sender_id === me?.id ? 'sent' : 'received'} ${message.pending ? 'pending' : ''} ${message.failed ? 'failed' : ''}`}
+                        >
+                            <div className="message-content">{message.content}</div>
+                            <div className="message-time">
+                                {message.pending 
+                                    ? 'Sending...' 
+                                    : message.failed 
+                                        ? 'Failed to send' 
+                                        : message.sent_at 
+                                            ? new Date(message.sent_at).toLocaleTimeString([], { 
+                                                hour: '2-digit', 
+                                                minute: '2-digit' 
+                                              }) 
+                                            : 'Sent'}
+                            </div>
+                        </div>
+                    ))
+                )}
                 {otherUserTyping && (
                     <div className="typing-indicator">
                         {otherUser.firstname} is typing...
@@ -163,11 +314,16 @@ const Chat = ({ conversationId, otherUser }) => {
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleTyping}
+                    onKeyDown={(e) => {
+                        if (e.key !== 'Enter') {
+                            handleTyping();
+                        }
+                    }}
                     placeholder="Type a message..."
+                    disabled={sendingMessage}
                 />
-                <button type="submit" disabled={!newMessage.trim()}>
-                    Send
+                <button type="submit" disabled={!newMessage.trim() || sendingMessage}>
+                    {sendingMessage ? 'Sending...' : 'Send'}
                 </button>
             </form>
         </div>

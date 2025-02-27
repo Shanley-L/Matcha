@@ -50,6 +50,18 @@
     flex-direction: column;
 }
 
+.no-messages {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #888;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+}
+
 .message {
     margin: 12px 0;
     max-width: 70%;
@@ -88,6 +100,19 @@
     background-color: white;
     color: #333;
     border-bottom-left-radius: 4px;
+}
+
+.message.pending .message-content {
+    opacity: 0.7;
+}
+
+.message.failed .message-content {
+    background-color: #ff4d4f;
+    color: white;
+}
+
+.message.failed .message-time {
+    color: #ff4d4f;
 }
 
 .message-time {

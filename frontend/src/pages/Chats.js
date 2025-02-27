@@ -34,21 +34,30 @@ const Chats = () => {
 
     // Fetch conversations when component mounts
     useEffect(() => {
+        // Use AbortController to prevent duplicate API calls
+        const controller = new AbortController();
         fetchConversations();
+        return () => controller.abort();
     }, [fetchConversations]);
 
     // Listen for new matches and refresh conversations
     useEffect(() => {
-        if (socket) {
+        if (!socket) return;
+        
+        // Flag to track if we've already set up the listener
+        let isListenerSet = false;
+        
+        if (!isListenerSet) {
             socket.on('new_notification', (notification) => {
                 if (notification.type === 'match') {
                     fetchConversations();
                 }
             });
+            isListenerSet = true;
         }
 
         return () => {
-            if (socket) {
+            if (socket && isListenerSet) {
                 socket.off('new_notification');
             }
         };

@@ -2,6 +2,7 @@ import mysql.connector
 from config.database import db_config
 import logging
 import json
+from datetime import datetime
 
 class ConversationModel:
     @staticmethod
@@ -40,7 +41,6 @@ class ConversationModel:
     @staticmethod
     def get_conversations(user_id):
         try:
-            logging.info(f"Getting conversations for user {user_id}")
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
 
@@ -57,20 +57,19 @@ class ConversationModel:
                 WHERE c.user1_id = %s OR c.user2_id = %s
                 ORDER BY COALESCE(last_message_time, c.created_at) DESC
             """
-            
-            logging.info(f"Executing query: {query}")
             cursor.execute(query, (user_id, user_id))
-            
             conversations = cursor.fetchall()
-            logging.info(f"Found {len(conversations)} conversations")
-            
             # Format the conversations data
             formatted_conversations = []
             for conv in conversations:
-                logging.info(f"Processing conversation {conv['id']}")
                 # Parse JSON photos arrays and add /shared/uploads prefix
                 user1_photos = [f"/shared/uploads{photo}" for photo in (json.loads(conv['user1_photos']) if conv['user1_photos'] else [])]
                 user2_photos = [f"/shared/uploads{photo}" for photo in (json.loads(conv['user2_photos']) if conv['user2_photos'] else [])]
+                
+                # Convert datetime to ISO format string
+                last_message_time = conv['last_message_time']
+                if isinstance(last_message_time, datetime):
+                    last_message_time = last_message_time.isoformat()
                 
                 formatted_conv = {
                     'id': conv['id'],
@@ -87,13 +86,10 @@ class ConversationModel:
                         'photos': user2_photos
                     },
                     'last_message': conv['last_message'],
-                    'last_message_time': conv['last_message_time']
+                    'last_message_time': last_message_time
                 }
                 formatted_conversations.append(formatted_conv)
-            
-            logging.info(f"Returning {len(formatted_conversations)} formatted conversations")
             return formatted_conversations
-
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_conversations: {err}")
             return []
@@ -111,7 +107,6 @@ class ConversationModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
-
             cursor.execute("""
                 SELECT m.id, m.sender_id, m.content as message, m.sent_at as created_at,
                     u.firstname, u.photos
@@ -121,14 +116,18 @@ class ConversationModel:
                 ORDER BY m.sent_at DESC
                 LIMIT %s OFFSET %s
             """, (conversation_id, limit, offset))
-            
             messages = cursor.fetchall()
-            
             # Format the messages data
             formatted_messages = []
             for msg in messages:
                 # Parse photos and add /shared/uploads prefix
                 photos = [f"/shared/uploads{photo}" for photo in (json.loads(msg['photos']) if msg['photos'] else [])]
+                
+                # Convert datetime to ISO format string
+                created_at = msg['created_at']
+                if isinstance(created_at, datetime):
+                    created_at = created_at.isoformat()
+                
                 formatted_msg = {
                     'id': msg['id'],
                     'sender': {
@@ -137,12 +136,10 @@ class ConversationModel:
                         'photos': photos
                     },
                     'message': msg['message'],
-                    'created_at': msg['created_at']
+                    'created_at': created_at
                 }
                 formatted_messages.append(formatted_msg)
-            
             return formatted_messages[::-1]  # Reverse to get chronological order
-
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_messages: {err}")
             return []
@@ -160,15 +157,12 @@ class ConversationModel:
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
-
             cursor.execute("""
                 INSERT INTO messages (conversation_id, sender_id, content)
                 VALUES (%s, %s, %s)
             """, (conversation_id, sender_id, message))
-            
             connection.commit()
             message_id = cursor.lastrowid
-
             # Get the complete message data
             cursor.execute("""
                 SELECT m.id, m.sender_id, m.content as message, m.sent_at as created_at,
@@ -177,11 +171,14 @@ class ConversationModel:
                 JOIN users u ON m.sender_id = u.id
                 WHERE m.id = %s
             """, (message_id,))
-            
             msg = cursor.fetchone()
-            
             if msg:
                 photos = json.loads(msg[5]) if msg[5] else []
+                # Convert datetime to ISO format string
+                created_at = msg[3]
+                if isinstance(created_at, datetime):
+                    created_at = created_at.isoformat()
+                
                 return {
                     'id': msg[0],
                     'sender': {
@@ -190,10 +187,9 @@ class ConversationModel:
                         'photos': photos
                     },
                     'message': msg[2],
-                    'created_at': msg[3]
+                    'created_at': created_at
                 }
             return None
-
         except mysql.connector.Error as err:
             logging.error(f"Database error in add_message: {err}")
             return None
