@@ -21,96 +21,99 @@ import SelectMatch from './pages/SelectMatch';
 import EditProfile from './pages/EditProfile';
 import EditPhoto from './pages/EditPhoto';
 import { WhoAmIProvider } from './context/WhoAmIContext';
+import { UserProvider } from './context/UserContext';
 import UsersProfile from './pages/UsersProfile';
 
 const App = () => {
   return (
     <WhoAmIProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/unverified" element={<Unverified />} />
-          <Route path="/confirm/:token" element={<EmailConfirmation />} />
+      <UserProvider>
+        <Router>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/unverified" element={<Unverified />} />
+            <Route path="/confirm/:token" element={<EmailConfirmation />} />
 
-          {/* Protected Routes */}
-          <Route path="/select-country" element={
-            <ProtectedRoute>
-              <SelectCountry />
-            </ProtectedRoute>
-          } />
-          <Route path="/complete-profile" element={
-            <ProtectedRoute>
-              <CompleteProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/upload-photos" element={
-            <ProtectedRoute>
-              <UploadPhotos />
-            </ProtectedRoute>
-          } />
-          <Route path="/select-interests" element={
-            <ProtectedRoute>
-              <SelectInterests />
-            </ProtectedRoute>
-          } />
-          <Route path="/select-match" element={
-            <ProtectedRoute>
-              <SelectMatch />
-            </ProtectedRoute>
-          } />
-          <Route path="/home" element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
-          <Route path="/maps" element={
-            <ProtectedRoute>
-              <Maps />
-            </ProtectedRoute>
-          } />
-          <Route path="/likes" element={
-            <ProtectedRoute>
-              <Likes />
-            </ProtectedRoute>
-          } />
-          <Route path="/chats" element={
-            <ProtectedRoute>
-              <Chats />
-            </ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />
-          <Route path="/edit-profile" element={
-            <ProtectedRoute>
-              <EditProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/edit-photo" element={
-            <ProtectedRoute>
-              <EditPhoto />
-            </ProtectedRoute>
-          } />
-          <Route path="/viewers" element={
-            <ProtectedRoute>
-              <Viewers />
-            </ProtectedRoute>
-          } />
-          <Route path="/user/:userId" element={<UsersProfile />} />
-          <Route path="/" element={<Login />} />
-          
-          {/* Catch-all route - redirect to home if authenticated, login if not */}
-          <Route path="*" element={
-            <ProtectedRoute>
-              <Navigate to="/home" replace />
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </Router>
+            {/* Protected Routes */}
+            <Route path="/select-country" element={
+              <ProtectedRoute>
+                <SelectCountry />
+              </ProtectedRoute>
+            } />
+            <Route path="/complete-profile" element={
+              <ProtectedRoute>
+                <CompleteProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/upload-photos" element={
+              <ProtectedRoute>
+                <UploadPhotos />
+              </ProtectedRoute>
+            } />
+            <Route path="/select-interests" element={
+              <ProtectedRoute>
+                <SelectInterests />
+              </ProtectedRoute>
+            } />
+            <Route path="/select-match" element={
+              <ProtectedRoute>
+                <SelectMatch />
+              </ProtectedRoute>
+            } />
+            <Route path="/home" element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            } />
+            <Route path="/maps" element={
+              <ProtectedRoute>
+                <Maps />
+              </ProtectedRoute>
+            } />
+            <Route path="/likes" element={
+              <ProtectedRoute>
+                <Likes />
+              </ProtectedRoute>
+            } />
+            <Route path="/chats" element={
+              <ProtectedRoute>
+                <Chats />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/edit-profile" element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/edit-photo" element={
+              <ProtectedRoute>
+                <EditPhoto />
+              </ProtectedRoute>
+            } />
+            <Route path="/viewers" element={
+              <ProtectedRoute>
+                <Viewers />
+              </ProtectedRoute>
+            } />
+            <Route path="/user/:userId" element={<UsersProfile />} />
+            <Route path="/" element={<Login />} />
+            
+            {/* Catch-all route - redirect to home if authenticated, login if not */}
+            <Route path="*" element={
+              <ProtectedRoute>
+                <Navigate to="/home" replace />
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </Router>
+      </UserProvider>
     </WhoAmIProvider>
   );
 };
