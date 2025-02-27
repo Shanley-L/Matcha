@@ -1,8 +1,8 @@
 import os
 from flask_mail import Mail
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, session
 from flask_cors import CORS
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, disconnect
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +25,14 @@ mail = Mail(app)
 CORS(app, supports_credentials=True)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Socket authentication middleware
+@socketio.on('connect')
+def handle_connect():
+    if 'user_id' not in session:
+        logging.error("Unauthorized socket connection attempt")
+        return False  # Reject the connection
+    return True
 
 from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
