@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from '../config/axios';
-import { useSocket } from '../context/SocketContext';
-import { useUser } from '../context/UserContext';
+import { useWhoAmI } from '../context/WhoAmIContext';
 import '../styles/components/Chat.css';
 
 const Chat = ({ conversationId, otherUser }) => {
@@ -12,8 +11,7 @@ const Chat = ({ conversationId, otherUser }) => {
     const [otherUserTyping, setOtherUserTyping] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
-    const { socket } = useSocket();
-    const { user } = useUser();
+    const { socket, me } = useWhoAmI();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -40,7 +38,13 @@ const Chat = ({ conversationId, otherUser }) => {
 
     // Socket event handlers
     useEffect(() => {
-        if (socket && conversationId) {
+        if (!socket) {
+            console.log('Socket not available for chat');
+            return;
+        }
+        
+        if (conversationId) {
+            console.log(`Joining conversation room: ${conversationId}`);
             // Join the conversation room
             socket.emit('join', { conversation_id: conversationId });
 
@@ -54,26 +58,29 @@ const Chat = ({ conversationId, otherUser }) => {
 
             // Listen for typing status
             socket.on('typing_status', (data) => {
-                if (data.conversation_id === conversationId && data.user_id !== user.id) {
+                if (data.conversation_id === conversationId && data.user_id !== me.id) {
                     setOtherUserTyping(data.is_typing);
                 }
             });
 
             return () => {
+                console.log(`Leaving conversation room: ${conversationId}`);
                 socket.off('new_message');
                 socket.off('typing_status');
             };
         }
-    }, [socket, conversationId, user.id]);
+    }, [socket, conversationId, me?.id]);
 
     // Handle typing status
     const handleTyping = () => {
-        if (!isTyping) {
+        if (!socket || !isTyping) {
             setIsTyping(true);
-            socket.emit('typing', {
-                conversation_id: conversationId,
-                is_typing: true
-            });
+            if (socket) {
+                socket.emit('typing', {
+                    conversation_id: conversationId,
+                    is_typing: true
+                });
+            }
         }
 
         // Clear existing timeout
@@ -84,10 +91,12 @@ const Chat = ({ conversationId, otherUser }) => {
         // Set new timeout
         typingTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
-            socket.emit('typing', {
-                conversation_id: conversationId,
-                is_typing: false
-            });
+            if (socket) {
+                socket.emit('typing', {
+                    conversation_id: conversationId,
+                    is_typing: false
+                });
+            }
         }, 2000);
     };
 
@@ -130,7 +139,7 @@ const Chat = ({ conversationId, otherUser }) => {
                 {messages.map((message) => (
                     <div
                         key={message.id}
-                        className={`message ${message.sender_id === user.id ? 'sent' : 'received'}`}
+                        className={`message ${message.sender_id === me?.id ? 'sent' : 'received'}`}
                     >
                         <div className="message-content">{message.content}</div>
                         <div className="message-time">

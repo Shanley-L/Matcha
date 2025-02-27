@@ -87,3 +87,19 @@ class AuthController:
         session.clear()
         logging.error("Logout successful")
         return jsonify({"message": "Logout successful!"}), 200
+
+    @staticmethod
+    def get_current_user():
+        try:
+            user = UserModel.get_by_id(session['user_id'])
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+                
+            # Remove sensitive information
+            if 'password' in user:
+                del user['password']
+                
+            return jsonify(user)
+        except Exception as e:
+            logging.error(f"Error in get_current_user: {str(e)}")
+            return jsonify({'error': 'Internal server error'}), 500

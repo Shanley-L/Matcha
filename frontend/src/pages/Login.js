@@ -26,7 +26,7 @@ const Login = () => {
                 console.log("First login");
                 navigate('/select-country'); // Première étape après la connexion
             } else {
-                navigate('/profile');
+                navigate('/home');
             }
         } catch (error) {
             console.log(error);

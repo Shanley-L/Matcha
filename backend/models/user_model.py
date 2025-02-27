@@ -204,6 +204,34 @@ class UserModel:
             """
             cursor.execute(query, (user_id, target_user_id, interaction_type))
             connection.commit()
+            logging.info(f"Created interaction: {user_id} -> {target_user_id} ({interaction_type})")
+
+            # Check if this creates a match
+            if interaction_type == 'like':
+                # Check if there's a mutual like
+                match_query = """
+                    SELECT COUNT(*) as match_count
+                    FROM user_interactions
+                    WHERE user_id = %s 
+                    AND target_user_id = %s
+                    AND interaction_type = 'like'
+                """
+                cursor.execute(match_query, (target_user_id, user_id))
+                result = cursor.fetchone()
+                
+                if result[0] > 0:  # If there's a mutual like
+                    logging.info(f"Match found between users {user_id} and {target_user_id}")
+                    # Create a conversation
+                    conv_query = """
+                        INSERT INTO conversations (user1_id, user2_id)
+                        VALUES (LEAST(%s, %s), GREATEST(%s, %s))
+                        ON DUPLICATE KEY UPDATE id = id
+                    """
+                    cursor.execute(conv_query, (user_id, target_user_id, user_id, target_user_id))
+                    conversation_id = cursor.lastrowid
+                    connection.commit()
+                    logging.info(f"Created conversation {conversation_id} for match between users {user_id} and {target_user_id}")
+                    
             return True
             
         except mysql.connector.Error as err:

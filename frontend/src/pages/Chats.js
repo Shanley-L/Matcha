@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../config/axios';
-import { useUser } from '../context/UserContext';
-import { useSocket } from '../context/SocketContext';
+import { useWhoAmI } from '../context/WhoAmIContext';
 import Chat from '../components/Chat';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
@@ -11,11 +10,17 @@ const Chats = () => {
     const [conversations, setConversations] = useState([]);
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { user } = useUser();
-    const { socket } = useSocket();
+    const { me, socket } = useWhoAmI();
 
     const fetchConversations = useCallback(async () => {
         try {
+            if (!me) {
+                console.log('User not authenticated, skipping fetch');
+                setLoading(false);
+                return;
+            }
+            
+            console.log('User ID: ' + me.id);
             console.log('Fetching conversations...');
             const response = await axios.get('/api/conv/list');
             console.log('Conversations response:', response.data);
@@ -25,7 +30,7 @@ const Chats = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [me]);
 
     // Fetch conversations when component mounts
     useEffect(() => {
@@ -58,7 +63,7 @@ const Chats = () => {
                 photos: []
             };
         }
-        return conversation.user1.id === user?.id ? conversation.user2 : conversation.user1;
+        return conversation.user1.id === me?.id ? conversation.user2 : conversation.user1;
     };
 
     if (loading) {
