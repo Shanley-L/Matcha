@@ -25,8 +25,6 @@ const Viewers = () => {
         loadProfile();
     }, []);
 
-    console.log(user)
-
     const handleVisit = (viewerId) => {
         navigate(`/user/${viewerId}`);
     };

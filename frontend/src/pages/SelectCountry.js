@@ -4,6 +4,7 @@ import { useUser } from '../context/UserContext'; // Importer le hook pour accé
 import { useNavigate } from 'react-router-dom';
 import { IoChevronBack, IoSearch } from 'react-icons/io5';
 import './SelectCountry.css';
+import GetLocation from '../components/GetLocation';
 
 const countries = [
     { code: 'US', name: 'United States' },
@@ -33,10 +34,11 @@ const SelectCountry = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const { userData, setUserData } = useUser(); // Utiliser le contexte pour accéder et modifier les données
     const navigate = useNavigate();
+    const location = GetLocation();
 
     const handleNext = () => {
         if (selectedCountry) {
-            setUserData({ ...userData, country: selectedCountry }); // Mettre à jour les données utilisateur
+            setUserData({ ...userData, country: selectedCountry, town: location.town, neighbourhood: location.neighbourhood }); // Mettre à jour les données utilisateur
             navigate('/complete-profile');
         }
     };

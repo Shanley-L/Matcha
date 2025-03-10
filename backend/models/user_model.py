@@ -12,7 +12,7 @@ class UserModel:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
             birthdate, country, gender, looking_for, interests, photos, match_type,\
-            job, bio, created_at, viewers FROM users WHERE id = %s", (user_id,))
+            job, bio, town, neighbourhood, created_at, viewers FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
                 if user.get('interests') and isinstance(user['interests'], bytes):
@@ -25,6 +25,10 @@ class UserModel:
                     user['birthdate'] = user['birthdate'].isoformat() if user['birthdate'] else None
                 if user.get('created_at'):
                     user['created_at'] = user['created_at'].isoformat() if user['created_at'] else None
+                if user.get('town'):
+                    user['town'] = user['town']
+                if user.get('neighbourhood'):
+                    user['neighbourhood'] = user['neighbourhood']
             return user
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_by_id: {err}")
@@ -90,7 +94,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, username=None, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None):
+    def update_user(user_id, username=None, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None, town=None, neighbourhood=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -144,6 +148,12 @@ class UserModel:
             if viewers:
                 update_fields.append("viewers = %s")
                 params.append(viewers)
+            if town:
+                update_fields.append("town = %s")
+                params.append(town)
+            if neighbourhood:
+                update_fields.append("neighbourhood = %s")
+                params.append(neighbourhood)
             if not update_fields:
                 return None, "No fields to update"
             sql = f"UPDATE users SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"

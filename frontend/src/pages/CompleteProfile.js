@@ -53,7 +53,6 @@ const CompleteProfile = () => {
         if (!formData.day || !formData.month || !formData.year) return false;
 
         const age = calculateAge(formData.year, formData.month, formData.day);
-        console.log(age);
         if (age >= 18 && age <= 120) {
             return true;
         } else {

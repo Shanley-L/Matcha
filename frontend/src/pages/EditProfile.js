@@ -25,7 +25,9 @@ const EditProfile = () => {
         year: '',
         job: '',
         country: '',
-        bio: ''
+        bio: '',
+        town: '',
+        neighbourhood: ''
     });
 
     // Available interests for selection
@@ -154,7 +156,9 @@ const EditProfile = () => {
                 year: birthDate ? birthDate.getFullYear().toString() : '',
                 job: user.job || '',
                 country: user.country || '',
-                bio: user.bio || ''
+                bio: user.bio || '',
+                town: user.town || '',
+                neighbourhood: user.neighbourhood || ''
             });
         }
     }, [user, months]);
@@ -234,6 +238,8 @@ const EditProfile = () => {
             if (formData.job?.trim()) formDataToSend.append('job', formData.job.trim());
             if (formData.country?.trim()) formDataToSend.append('country', formData.country.trim());
             if (formData.bio?.trim()) formDataToSend.append('bio', formData.bio.trim());
+            if (formData.town?.trim()) formDataToSend.append('town', formData.town.trim());
+            if (formData.neighbourhood?.trim()) formDataToSend.append('neighbourhood', formData.neighbourhood.trim());
 
             const response = await axios.put('/api/user/update', formDataToSend);
             
@@ -242,7 +248,9 @@ const EditProfile = () => {
                     ...prev,
                     job: formData.job?.trim() || prev.job,
                     country: formData.country?.trim() || prev.country,
-                    bio: formData.bio?.trim() || prev.bio
+                    bio: formData.bio?.trim() || prev.bio,
+                    town: formData.town?.trim() || prev.town,
+                    neighbourhood: formData.neighbourhood?.trim() || prev.neighbourhood
                 }));
                 setIsEditingAbout(false);
             }
@@ -306,8 +314,6 @@ const EditProfile = () => {
             </div>
         );
     }
-
-    console.log(user);
 
     return (
         <div className="page-container">
@@ -489,6 +495,24 @@ const EditProfile = () => {
                                         style={formStyles.input}
                                     />
                                 </div>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        name="town"
+                                        value={formData.town}
+                                        onChange={handleInputChange}
+                                        placeholder="Town"
+                                        style={formStyles.input}
+                                    />
+                                    <input
+                                        type="text"
+                                        name="neighbourhood"
+                                        value={formData.neighbourhood}
+                                        onChange={handleInputChange}
+                                        placeholder="Neighbourhood"
+                                        style={formStyles.input}
+                                    />
+                                </div>
                                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                     <input
                                         type="text"
@@ -504,6 +528,7 @@ const EditProfile = () => {
                         ) : (
                             <>
                                 <p>{user.job}, {user.country}</p>
+                                {<p>position: {user.town}, {user.neighbourhood}</p>}
                                 <p>{user.bio}</p>
                             </>
                         )}

@@ -91,8 +91,6 @@ const Profile = () => {
         );
     }
 
-    console.log(user);
-
     return (
         <div className="page-container">
             <PageHeader />
@@ -139,6 +137,7 @@ const Profile = () => {
                         </div>
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
+                        {<p>Actually in : {user.town}, {user.neighbourhood}</p>}
                         <p>{user.bio}</p>
                         <h2 className="profile-header">Interests</h2>
                         <div className='interest-array'>

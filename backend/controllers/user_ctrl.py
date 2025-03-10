@@ -104,7 +104,9 @@ class UserController:
                 is_first_login=data.get('is_first_login'),
                 job=data.get('job'),
                 bio=data.get('bio'),
-                viewers=data.get('viewers')
+                viewers=data.get('viewers'),
+                town=data.get('town'),
+                neighbourhood=data.get('neighbourhood')
             )
 
             if updated_user_id:

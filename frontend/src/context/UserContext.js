@@ -18,7 +18,9 @@ export const UserProvider = ({ children }) => {
         interests: [],
         photos: [],
         matchType: '',
-        is_first_login: 0
+        is_first_login: 0,
+        town: '',
+        neighbourhood: ''
     });
 
     return (
