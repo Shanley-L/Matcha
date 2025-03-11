@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
     job VARCHAR(100),
     birthdate DATE,
     country VARCHAR(100),
-    town VARCHAR(100),
-    neighbourhood VARCHAR(100),
+    city VARCHAR(100),
+    suburb VARCHAR(255),
     interests JSON,
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, town, neighbourhood, interests, is_first_login, photos, match_type) VALUES
+INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, city, suburb, interests, is_first_login, photos, match_type) VALUES
     ('Sebou', 'sebastien@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sebastien', 'male', 'female', 'Passionné de photographie et de voyages. Amateur de bons vins et de cuisine française.', 'Photographe', '1990-05-15', 'France', 'Paris', 'Montmartre', '["photography", "travel_places", "food_drink"]', false, '["/init/sebastien.jpeg", "/init/sebastien.jpeg", "/init/sebastien.jpeg", "/init/sebastien.jpeg"]', 'love'),
     ('Lisou', 'elise@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Elise', 'female', 'male', 'Artiste dans l''âme, je peins et dessine. Je cherche à partager ma passion pour l''art.', 'Artiste Peintre', '1993-08-22', 'France', 'Paris', 'Le Marais', '["art", "painting", "nature_plant"]', false, '["/init/elise.jpeg", "/init/elise.jpeg", "/init/elise.jpeg", "/init/elise.jpeg"]', 'friends'),
     ('Sarouche', 'sarah@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Sarah', 'female', 'male', 'Yoga instructor cherchant à partager bien-être et spiritualité.', 'Professeur de Yoga', '1991-03-12', 'United States', 'Paris', 'Saint-Germain-des-Prés', '["gym_fitness", "nature_plant", "people_society"]', false, '["/init/sarah.jpeg", "/init/sarah.jpeg", "/init/sarah.jpeg", "/init/sarah.jpeg"]', 'love'),

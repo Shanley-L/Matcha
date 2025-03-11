@@ -38,7 +38,7 @@ const SelectCountry = () => {
 
     const handleNext = () => {
         if (selectedCountry) {
-            setUserData({ ...userData, country: selectedCountry, town: location.town, neighbourhood: location.neighbourhood }); // Mettre à jour les données utilisateur
+            setUserData({ ...userData, country: selectedCountry, city: location.city, suburb: location.suburb }); // Mettre à jour les données utilisateur
             navigate('/complete-profile');
         }
     };
