@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
@@ -10,8 +10,13 @@ const UsersProfile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+    const optionsRef = useRef(null);
     const { userId } = useParams();
     const navigate = useNavigate();
+    const [isBlocked, setIsBlocked] = useState(false);
+    const [isReported, setIsReported] = useState(false);
+
 
     // Available interests for selection (same as Profile.js)
     const availableInterests = [
@@ -63,6 +68,63 @@ const UsersProfile = () => {
         loadUserProfile();
     }, [userId, navigate]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+                setShowOptionsMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        const checkUserStatus = async () => {
+            try {
+                const response = await axios.get(`/api/user/${userId}/status`);
+                setIsBlocked(response.data.isBlocked);
+                setIsReported(response.data.isReported);
+            } catch (error) {
+                console.error('Error checking user status:', error);
+            }
+        };
+        checkUserStatus();
+    }, [userId]);
+    
+    const handleToggleBlock = async () => {
+        try {
+            const response = await axios.post('/api/user/block', { target_id: userId });
+    
+            if (response.data.message === 'blocked') {
+                setIsBlocked(true);
+            } else if (response.data.message === 'unblocked') {
+                setIsBlocked(false);
+            }
+        } catch (error) {
+            console.error('Error toggling block status:', error);
+        }
+        setShowOptionsMenu(false);
+    };
+
+    const handleToggleReport = async () => {
+        try {
+            const response = await axios.post('/api/user/report', { target_id: userId });
+    
+            if (response.data.message === 'reported') {
+                setIsReported(true);
+            } else if (response.data.message === 'unreported') {
+                setIsReported(false);
+            }
+        } catch (error) {
+            console.error('Error toggling report status:', error);
+        }
+        setShowOptionsMenu(false);
+    };    
+    
+
     const nextPhoto = () => {
         if (user?.photos?.length) {
             setCurrentPhotoIndex((prev) => (prev + 1) % user.photos.length);
@@ -78,6 +140,7 @@ const UsersProfile = () => {
     const handleBackClick = () => {
         navigate(-1);
     };
+
 
     if (loading) {
         return (
@@ -150,11 +213,65 @@ const UsersProfile = () => {
 
                 {user && (
                     <div className="profile-info">
-                        <div className="profile-header">
+                        <div className="profile-header" style={{ position: 'relative' }}>
                             <h1>
                                 {user.username}, {user.firstname}
                                 <span>, {calculateAge(user.birthdate)} ans</span>
                             </h1>
+                            <div className="options-container" ref={optionsRef} style={{ position: 'absolute', right: '0', top: '0' }}>
+                                <i 
+                                    className="fas fa-ellipsis-v" 
+                                    onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                                    style={{ 
+                                        cursor: 'pointer',
+                                        fontSize: '1.2rem',
+                                        padding: '8px',
+                                        transition: 'opacity 0.2s',
+                                        opacity: showOptionsMenu ? 0.7 : 1
+                                    }}
+                                ></i>
+                                {showOptionsMenu && (
+                                    <div className="options-menu" style={{
+                                        position: 'absolute',
+                                        right: '0',
+                                        top: '100%',
+                                        backgroundColor: 'white',
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                        borderRadius: '4px',
+                                        padding: '8px 0',
+                                        zIndex: 1000,
+                                        minWidth: '150px'
+                                    }}>
+                                        <div 
+                                            onClick={handleToggleReport}
+                                            style={{
+                                                padding: '8px 16px',
+                                                cursor: 'pointer',
+                                                transition: 'background-color 0.2s'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            <i className="fas fa-flag" style={{ marginRight: '8px' }}></i>
+                                            {isReported ? 'Unreport' : 'Report as fake'}
+                                        </div>
+                                        <div 
+                                            onClick={handleToggleBlock}
+                                            style={{
+                                                padding: '8px 16px',
+                                                cursor: 'pointer',
+                                                color: '#dc3545',
+                                                transition: 'background-color 0.2s'
+                                            }}
+                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                        >
+                                            <i className="fas fa-ban" style={{ marginRight: '8px' }}></i>
+                                            {isBlocked ? 'Unblock' : 'Block'}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <h2 className="profile-header">About</h2>

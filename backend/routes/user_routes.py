@@ -48,3 +48,32 @@ def add_test_likes():
 @email_verified_required
 def get_other_user_profile(user_id):
     return UserController.get_user_profile_by_id(user_id)
+
+@user_bp.route('/report', methods=['POST'])
+@email_verified_required
+def report_user():
+    data = request.json
+    target_id = data.get('target_id')
+    return UserController.report_user(target_id)
+
+@user_bp.route('/block', methods=['POST'])
+@email_verified_required
+def block_user():
+    data = request.json
+    target_id = data.get('target_id')
+    return UserController.block_user(target_id)
+
+@user_bp.route('/undo_report', methods=['POST'])
+@email_verified_required
+def undo_report():
+    data = request.json
+    target_id = data.get('target_id')
+    return UserController.undo_report(target_id)
+
+@user_bp.route('/undo_block', methods=['POST']) 
+@email_verified_required
+def undo_block():
+    data = request.json
+    target_id = data.get('target_id')
+    return UserController.undo_block(target_id)
+
