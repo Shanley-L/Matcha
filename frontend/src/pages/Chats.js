@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from '../config/axios';
 import { useWhoAmI } from '../context/WhoAmIContext';
 import Chat from '../components/Chat';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
+import { ChevronRightIcon } from '../components/Icons';
 import '../styles/pages/Chats.css';
 
 const Chats = () => {
@@ -11,6 +12,8 @@ const Chats = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(true);
     const { me, socket } = useWhoAmI();
+    const conversationsListRef = useRef(null);
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -63,6 +66,26 @@ const Chats = () => {
         };
     }, [socket, fetchConversations]);
 
+    // Toggle the drawer
+    const toggleDrawer = () => {
+        setIsDrawerOpen(!isDrawerOpen);
+    };
+
+    // Close the drawer when a conversation is selected (on mobile)
+    const handleConversationSelect = (conversation) => {
+        setSelectedConversation(conversation);
+        
+        // Check if we're on mobile (using window.innerWidth)
+        if (window.innerWidth <= 768) {
+            setIsDrawerOpen(false);
+        }
+    };
+
+    // Close drawer when clicking outside
+    const handleOverlayClick = () => {
+        setIsDrawerOpen(false);
+    };
+
     const getOtherUser = (conversation) => {
         if (!conversation || !conversation.user1 || !conversation.user2) {
             return {
@@ -97,7 +120,25 @@ const Chats = () => {
             <PageHeader />
             <div className="content">
                 <div className="chats-container">
-                    <div className="conversations-list">
+                    {/* Mobile toggle button */}
+                    <button 
+                        className={`conversations-toggle ${isDrawerOpen ? 'open' : ''}`}
+                        onClick={toggleDrawer}
+                        aria-label="Toggle conversations"
+                    >
+                        <ChevronRightIcon size={20} />
+                    </button>
+
+                    {/* Overlay for mobile */}
+                    <div 
+                        className={`drawer-overlay ${isDrawerOpen ? 'visible' : ''}`}
+                        onClick={handleOverlayClick}
+                    ></div>
+
+                    <div 
+                        className={`conversations-list ${isDrawerOpen ? 'open' : ''}`} 
+                        ref={conversationsListRef}
+                    >
                         {validConversations.length === 0 ? (
                             <div className="no-conversations">
                                 No conversations yet
@@ -109,7 +150,7 @@ const Chats = () => {
                                     <div
                                         key={conversation.id}
                                         className={`conversation-item ${selectedConversation?.id === conversation.id ? 'selected' : ''}`}
-                                        onClick={() => setSelectedConversation(conversation)}
+                                        onClick={() => handleConversationSelect(conversation)}
                                     >
                                         <div
                                             className="conversation-photo"
@@ -128,7 +169,7 @@ const Chats = () => {
                             })
                         )}
                     </div>
-                    <div className="chat-view">
+                    <div className={`chat-view ${isDrawerOpen ? 'shifted' : ''}`}>
                         {selectedConversation ? (
                             <Chat
                                 conversationId={selectedConversation.id}

@@ -122,58 +122,152 @@
     color: #666;
 }
 
+/* Hide toggle button by default (for desktop) */
+.conversations-toggle {
+    display: none; /* Hidden by default on desktop */
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .chats-container {
         flex-direction: column;
+        position: relative;
+        overflow: hidden;
     }
 
     .conversations-list {
-        width: 100%;
-        height: 80px;
+        position: fixed;
+        left: -280px; /* Start off-screen */
+        top: 0;
+        bottom: 0;
+        width: 280px;
+        height: 100vh;
         min-width: unset;
         display: flex;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding: 10px;
-    }
-
-    .conversations-list:hover {
-        height: 40vh;
-        width: 100%;
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
+        padding: 70px 15px 70px 15px; /* Space for header and bottom nav */
+        background-color: white;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .conversations-list.open {
+        transform: translateX(280px);
     }
 
     .conversation-item {
-        padding: 10px;
-        flex-shrink: 0;
-        width: auto;
+        padding: 15px;
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin: 5px 0;
+        border-radius: 8px;
     }
 
     .conversation-photo {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
+        border: 2px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .conversation-item.selected .conversation-photo {
+        border-color: #0084ff;
     }
 
     .conversation-info {
-        display: none;
-        margin-left: 10px;
+        display: block;
+        opacity: 1;
+        width: calc(100% - 65px);
+        margin-left: 15px;
+        text-align: left;
     }
 
-    .conversations-list:hover .conversation-info {
+    .conversation-info h3 {
+        font-size: 16px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+    }
+
+    .conversation-info p {
         display: block;
-        width: calc(100% - 60px);
+        font-size: 14px;
+        margin: 5px 0 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .chat-view {
-        height: calc(100% - 80px);
-        transition: height 0.3s ease;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s ease;
     }
 
-    .conversations-list:hover + .chat-view {
-        height: calc(60vh - 60px);
+    .chat-view.shifted {
+        transform: translateX(280px);
+    }
+
+    /* Toggle button for conversations - show on mobile */
+    .conversations-toggle {
+        display: flex; /* Show on mobile */
+        position: fixed;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background-color: white;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 1001;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .conversations-toggle svg {
+        transition: transform 0.3s ease;
+    }
+
+    .conversations-toggle.open svg {
+        transform: rotate(180deg);
+    }
+
+    .conversations-toggle:hover {
+        background-color: #f8f8f8;
+        transform: translateY(-50%) scale(1.05);
+    }
+
+    .conversations-toggle:active {
+        transform: translateY(-50%) scale(0.95);
+    }
+
+    /* Overlay when drawer is open */
+    .drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .drawer-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
     }
 }
 
