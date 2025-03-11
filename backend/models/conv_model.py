@@ -201,3 +201,31 @@ class ConversationModel:
                 cursor.close()
             if connection:
                 connection.close()
+
+    @staticmethod
+    def get_conversation_by_id(conversation_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            
+            query = """
+                SELECT id, user1_id, user2_id, created_at
+                FROM conversations
+                WHERE id = %s
+            """
+            cursor.execute(query, (conversation_id,))
+            conversation = cursor.fetchone()
+            
+            return conversation
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_conversation_by_id: {err}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in get_conversation_by_id: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()

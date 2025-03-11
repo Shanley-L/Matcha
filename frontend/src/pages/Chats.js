@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from '../config/axios';
 import { useWhoAmI } from '../context/WhoAmIContext';
+import { useNotifications } from '../context/NotificationContext';
 import Chat from '../components/Chat';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
@@ -12,8 +13,15 @@ const Chats = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(true);
     const { me, socket } = useWhoAmI();
+    const { 
+        markMessagesAsRead, 
+        getUnreadCount, 
+        clearActiveConversation 
+    } = useNotifications();
     const conversationsListRef = useRef(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const socketListenersSetRef = useRef(false);
+    const previousConversationIdRef = useRef(null);
 
     const fetchConversations = useCallback(async () => {
         try {
@@ -43,28 +51,60 @@ const Chats = () => {
         return () => controller.abort();
     }, [fetchConversations]);
 
+    // Mark messages as read for the active conversation when the component mounts or changes
+    useEffect(() => {
+        if (selectedConversation && selectedConversation.id !== previousConversationIdRef.current) {
+            console.log(`Chats: Marking messages as read for conversation ${selectedConversation.id} (previous: ${previousConversationIdRef.current})`);
+            markMessagesAsRead(selectedConversation.id);
+            previousConversationIdRef.current = selectedConversation.id;
+        }
+    }, [selectedConversation, markMessagesAsRead]);
+
     // Listen for new matches and refresh conversations
     useEffect(() => {
         if (!socket) return;
         
-        // Flag to track if we've already set up the listener
-        let isListenerSet = false;
-        
-        if (!isListenerSet) {
-            socket.on('new_notification', (notification) => {
+        // Only set up listeners if they haven't been set up already
+        if (!socketListenersSetRef.current) {
+            console.log('Setting up socket listeners in Chats component');
+            
+            const handleNotification = (notification) => {
                 if (notification.type === 'match') {
+                    console.log('Received match notification, refreshing conversations');
                     fetchConversations();
                 }
-            });
-            isListenerSet = true;
+            };
+            
+            const handleNewMessage = () => {
+                console.log('Received new message notification, refreshing conversations');
+                fetchConversations();
+            };
+            
+            // Add event listeners
+            socket.on('new_notification', handleNotification);
+            socket.on('new_message', handleNewMessage);
+            
+            // Mark that we've set up the listeners
+            socketListenersSetRef.current = true;
+            
+            // Return cleanup function
+            return () => {
+                console.log('Cleaning up socket listeners in Chats component');
+                socket.off('new_notification', handleNotification);
+                socket.off('new_message', handleNewMessage);
+                socketListenersSetRef.current = false;
+            };
         }
-
-        return () => {
-            if (socket && isListenerSet) {
-                socket.off('new_notification');
-            }
-        };
     }, [socket, fetchConversations]);
+
+    // Clear active conversation when unmounting
+    useEffect(() => {
+        return () => {
+            console.log('Chats component unmounting, clearing active conversation');
+            clearActiveConversation();
+            previousConversationIdRef.current = null;
+        };
+    }, [clearActiveConversation]);
 
     // Toggle the drawer
     const toggleDrawer = () => {
@@ -73,7 +113,15 @@ const Chats = () => {
 
     // Close the drawer when a conversation is selected (on mobile)
     const handleConversationSelect = (conversation) => {
+        if (conversation.id === selectedConversation?.id) {
+            console.log('Same conversation selected, not updating');
+            return;
+        }
+        
+        console.log(`Selecting conversation: ${conversation.id}`);
         setSelectedConversation(conversation);
+        
+        // Mark messages as read is now handled in the useEffect
         
         // Check if we're on mobile (using window.innerWidth)
         if (window.innerWidth <= 768) {
@@ -146,20 +194,30 @@ const Chats = () => {
                         ) : (
                             validConversations.map((conversation) => {
                                 const otherUser = getOtherUser(conversation);
+                                const unreadCount = getUnreadCount(conversation.id);
+                                const isSelected = selectedConversation?.id === conversation.id;
+                                
                                 return (
                                     <div
                                         key={conversation.id}
-                                        className={`conversation-item ${selectedConversation?.id === conversation.id ? 'selected' : ''}`}
+                                        className={`conversation-item ${isSelected ? 'selected' : ''}`}
                                         onClick={() => handleConversationSelect(conversation)}
                                     >
-                                        <div
-                                            className="conversation-photo"
-                                            style={{
-                                                backgroundImage: `url(${otherUser.photos && otherUser.photos.length > 0 
-                                                    ? otherUser.photos[0] 
-                                                    : '/default-profile.png'})`
-                                            }}
-                                        />
+                                        <div className="conversation-photo-container">
+                                            <div
+                                                className="conversation-photo"
+                                                style={{
+                                                    backgroundImage: `url(${otherUser.photos && otherUser.photos.length > 0 
+                                                        ? otherUser.photos[0] 
+                                                        : '/default-profile.png'})`
+                                                }}
+                                            />
+                                            {unreadCount > 0 && !isSelected && (
+                                                <span className="conversation-notification-dot">
+                                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="conversation-info">
                                             <h3>{otherUser.firstname}</h3>
                                             <p>{otherUser.country} • {otherUser.age} years</p>

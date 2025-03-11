@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
+import { useNotifications } from '../context/NotificationContext';
 import '../styles/pages/shared.css';
 import '../styles/pages/Likes.css';
 
@@ -11,6 +12,7 @@ const Likes = () => {
     const [likes, setLikes] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const { markLikesAsRead, markMatchesAsRead } = useNotifications();
 
     const fetchData = async () => {
         try {
@@ -24,6 +26,12 @@ const Likes = () => {
         }
         setLoading(false);
     };
+
+    // Mark notifications as read when the page loads
+    useEffect(() => {
+        markLikesAsRead();
+        markMatchesAsRead();
+    }, [markLikesAsRead, markMatchesAsRead]);
 
     const handleAddTestLikes = async () => {
         try {

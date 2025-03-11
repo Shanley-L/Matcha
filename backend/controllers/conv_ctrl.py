@@ -95,14 +95,39 @@ class ConversationController:
                 room = str(conversation_id)
                 socketio.emit('new_message', socket_message, room=room)
                 
+                # Get the conversation details to find the recipient
+                conversation = ConversationModel.get_conversation_by_id(conversation_id)
+                if conversation:
+                    # Determine the recipient user ID
+                    recipient_id = None
+                    if conversation.get('user1_id') == session['user_id']:
+                        recipient_id = conversation.get('user2_id')
+                    else:
+                        recipient_id = conversation.get('user1_id')
+                    
+                    # Send a notification to the recipient
+                    if recipient_id:
+                        from socket_manager import active_users
+                        if str(recipient_id) in active_users:
+                            socketio.emit('new_notification', {
+                                'type': 'message',
+                                'from_user_id': session['user_id'],
+                                'from_user_name': sender.get('firstname', 'Someone'),
+                                'conversation_id': str(conversation_id),
+                                'target_user_id': str(recipient_id),
+                                'message_preview': message.get('message', '')[:30] + ('...' if len(message.get('message', '')) > 30 else ''),
+                                'timestamp': message.get('created_at')
+                            }, room=active_users[str(recipient_id)])
+                
                 # Prepare message for JSON response
                 response_message = dict(message)
                 
-                return jsonify(response_message)
-            return jsonify({'error': 'Failed to send message'}), 500
+                return jsonify(response_message), 201
+            else:
+                return jsonify({'error': 'Failed to send message'}), 400
         except Exception as e:
-            logging.error(f"Error in send_message: {str(e)}")
-            return jsonify({'error': 'Failed to process message', 'details': str(e)}), 500
+            logging.error(f"Error sending message: {str(e)}")
+            return jsonify({'error': 'Failed to send message', 'details': str(e)}), 500
 
     @staticmethod
     def get_or_create_conversation(user_id):

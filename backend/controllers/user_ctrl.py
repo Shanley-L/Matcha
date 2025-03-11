@@ -5,6 +5,8 @@ import os
 from werkzeug.utils import secure_filename
 import uuid
 import logging
+from datetime import datetime
+from app import socketio
 
 class UserController:
     UPLOAD_FOLDER = './shared/uploads/usersPictures'
@@ -166,6 +168,29 @@ class UserController:
             if success:
                 # Check if it's a match (both users liked each other)
                 is_match = UserModel.check_match(session['user_id'], liked_user_id)
+                
+                # Get current user info for the notification
+                current_user = UserModel.get_by_id(session['user_id'])
+                
+                # Send notification to the liked user
+                socketio.emit('new_notification', {
+                    'type': 'like',
+                    'from_user_id': session['user_id'],
+                    'from_user_name': current_user.get('firstname', 'Someone'),
+                    'target_user_id': liked_user_id,
+                    'timestamp': datetime.now().isoformat()
+                })
+                
+                # If it's a match, send a match notification too
+                if is_match:
+                    socketio.emit('new_notification', {
+                        'type': 'match',
+                        'from_user_id': session['user_id'],
+                        'from_user_name': current_user.get('firstname', 'Someone'),
+                        'target_user_id': liked_user_id,
+                        'timestamp': datetime.now().isoformat()
+                    })
+                
                 return jsonify({
                     "message": "Like recorded successfully",
                     "is_match": is_match
@@ -218,30 +243,45 @@ class UserController:
                         target_user_id=user_id,
                         interaction_type='like'
                     )
+                    
                     if success:
                         likes_added += 1
+                        
+                        # Send notification for the test like
+                        socketio.emit('new_notification', {
+                            'type': 'like',
+                            'from_user_id': user['id'],
+                            'from_user_name': user.get('firstname', 'Someone'),
+                            'target_user_id': user_id,
+                            'timestamp': datetime.now().isoformat()
+                        })
+                        
+                        # Check if it's a match
+                        is_match = UserModel.check_match(user['id'], user_id)
+                        if is_match:
+                            # Send match notification
+                            socketio.emit('new_notification', {
+                                'type': 'match',
+                                'from_user_id': user['id'],
+                                'from_user_name': user.get('firstname', 'Someone'),
+                                'target_user_id': user_id,
+                                'timestamp': datetime.now().isoformat()
+                            })
+                            
                 except Exception as e:
-                    logging.error(f"Error adding like from user {user['id']}: {str(e)}")
+                    logging.error(f"Error adding test like from user {user['id']}: {str(e)}")
                     continue
             
-            if likes_added > 0:
-                return jsonify({
-                    'status': 'success',
-                    'message': f'Successfully added {likes_added} test likes to your profile',
-                    'likes_added': likes_added
-                }), 200
-            else:
-                return jsonify({
-                    'status': 'error',
-                    'message': 'No likes could be added. You might have already received likes from all potential matches.'
-                }), 400
-                
-        except Exception as e:
-            logging.error(f"Error in add_test_likes: {str(e)}")
             return jsonify({
-                'status': 'error',
-                'message': str(e)
-            }), 500
+                "status": "success",
+                "message": f"Added {likes_added} test likes"
+            }), 200
+        except Exception as e:
+            logging.error(f"Error adding test likes: {str(e)}")
+            return jsonify({
+                "error": "Failed to add test likes",
+                "details": str(e)
+            }), 400
 
     @staticmethod
     def get_likes():

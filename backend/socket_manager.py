@@ -71,6 +71,23 @@ def handle_message(data):
     emit('new_message', message, room=conversation_id)
     logging.info(f'Message sent in conversation {conversation_id}')
 
+@socketio.on('test_notification')
+def handle_test_notification(data):
+    try:
+        user_id = None
+        for uid, sid in active_users.items():
+            if sid == request.sid:
+                user_id = uid
+                break
+                
+        if user_id:
+            logging.info(f'Sending test notification to user {user_id}: {data}')
+            emit('new_notification', data, room=request.sid)
+        else:
+            logging.warning('Test notification requested but user not found')
+    except Exception as e:
+        logging.error(f'Error in handle_test_notification: {str(e)}')
+
 @socketio.on('typing')
 def handle_typing(data):
     conversation_id = str(data['conversation_id'])

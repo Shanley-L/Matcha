@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from '../config/axios';
 import { useWhoAmI } from '../context/WhoAmIContext';
+import { useNotifications } from '../context/NotificationContext';
 import '../styles/components/Chat.css';
 
 const Chat = ({ conversationId, otherUser }) => {
@@ -13,7 +14,9 @@ const Chat = ({ conversationId, otherUser }) => {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const processedMessageIdsRef = useRef(new Set());
+    const previousConversationIdRef = useRef(null);
     const { socket, me } = useWhoAmI();
+    const { markMessagesAsRead } = useNotifications();
 
     // Debug function to log messages state
     useEffect(() => {
@@ -24,6 +27,15 @@ const Chat = ({ conversationId, otherUser }) => {
             messageKey: m.messageKey
         })));
     }, [messages]);
+
+    // Mark messages as read when viewing this conversation
+    useEffect(() => {
+        if (conversationId && conversationId !== previousConversationIdRef.current) {
+            console.log(`Chat: Marking messages as read for conversation ${conversationId} (previous: ${previousConversationIdRef.current})`);
+            markMessagesAsRead(conversationId);
+            previousConversationIdRef.current = conversationId;
+        }
+    }, [conversationId, markMessagesAsRead]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -132,12 +144,12 @@ const Chat = ({ conversationId, otherUser }) => {
                         // Check by content, sender and approximate time
                         if (msg.content === newMsg.content && 
                             msg.sender_id === newMsg.sender_id) {
-                            // If sent within 60 seconds, consider it a duplicate
+                            // If sent within 10 seconds, consider it a duplicate
                             const msgTime = new Date(msg.sent_at || new Date());
                             const newMsgTime = new Date(newMsg.sent_at || new Date());
                             const timeDiff = Math.abs(msgTime - newMsgTime);
-                            if (timeDiff < 1000) { // 10 seconds
-                                console.log('Duplicate detected by content and sender within 10s');
+                            if (timeDiff < 1000) { // 1 second
+                                console.log('Duplicate detected by content and sender within 1s');
                                 return true;
                             }
                         }
@@ -157,6 +169,7 @@ const Chat = ({ conversationId, otherUser }) => {
                 });
             }
         };
+        
         // Listen for typing status
         const handleTypingStatus = (data) => {
             console.log('Typing status received:', data);
@@ -180,6 +193,9 @@ const Chat = ({ conversationId, otherUser }) => {
                 console.log(`Leaving conversation room: ${conversationId}`);
                 socket.emit('leave_conversation', { conversation_id: conversationId });
             }
+            
+            // Reset the previous conversation ID
+            previousConversationIdRef.current = null;
         };
     }, [socket, conversationId, me?.id]);
 
