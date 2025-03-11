@@ -5,11 +5,14 @@ import PageHeader from '../components/PageHeader';
 import axios from '../config/axios';
 import '../styles/pages/shared.css';
 import '../styles/pages/Profile.css';
+import '../styles/pages/UsersProfile.css';
 
 const UsersProfile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [hasLikedMe, setHasLikedMe] = useState(false);
+    const [isMatch, setIsMatch] = useState(false);
     const { userId } = useParams();
     const navigate = useNavigate();
 
@@ -53,6 +56,14 @@ const UsersProfile = () => {
             try {
                 const response = await axios.get(`/api/user/${userId}/profile`);
                 setUser(response.data);
+                
+                // Check if this user has liked the current user
+                const likedResponse = await axios.get(`/api/user/has-liked-me/${userId}`);
+                setHasLikedMe(likedResponse.data.has_liked);
+                
+                // Check if there's a match
+                const matchResponse = await axios.get(`/api/user/is-match/${userId}`);
+                setIsMatch(matchResponse.data.is_match);
             } catch (error) {
                 console.error('Error loading user profile:', error);
                 navigate('/viewers');
@@ -77,6 +88,27 @@ const UsersProfile = () => {
 
     const handleBackClick = () => {
         navigate(-1);
+    };
+    
+    const handleUnmatch = async () => {
+        // Show a confirmation dialog
+        const confirmed = window.confirm(`Are you sure you want to unmatch with ${user.firstname}? This will delete your conversation and remove the match.`);
+        
+        if (!confirmed) {
+            return; // User cancelled the unmatch
+        }
+        
+        try {
+            const response = await axios.post(`/api/user/unmatch/${userId}`);
+            if (response.status === 200) {
+                setIsMatch(false);
+                // Navigate back to the matches page without showing an alert
+                navigate('/likes');
+            }
+        } catch (error) {
+            console.error('Error unmatching user:', error);
+            alert('Failed to unmatch user');
+        }
     };
 
     if (loading) {
@@ -151,6 +183,11 @@ const UsersProfile = () => {
                 {user && (
                     <div className="profile-info">
                         <div className="profile-header">
+                            {hasLikedMe && (
+                                <div className="liked-heart">
+                                    <i className="fas fa-heart"></i>
+                                </div>
+                            )}
                             <h1>
                                 {user.username}, {user.firstname}
                                 <span>, {calculateAge(user.birthdate)} ans</span>
@@ -176,6 +213,14 @@ const UsersProfile = () => {
                                 <p>No interest available</p>
                             )}
                         </div>
+                        
+                        {isMatch && (
+                            <div className="unmatch-container">
+                                <button className="unmatch-button" onClick={handleUnmatch}>
+                                    Unmatch
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

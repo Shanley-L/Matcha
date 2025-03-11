@@ -1,0 +1,54 @@
+/* Styling for the heart icon that indicates a user has liked the current user */
+.profile-header {
+    position: relative;
+}
+
+.liked-heart {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    color: #ff4757;
+    font-size: 24px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Styling for the unmatch button */
+.unmatch-container {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.unmatch-button {
+    background-color: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.unmatch-button:hover {
+    background-color: #ff3040;
+}
+
+.unmatch-button:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+} 

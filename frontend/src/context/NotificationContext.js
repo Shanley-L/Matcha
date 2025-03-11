@@ -17,6 +17,7 @@ export const NotificationProvider = ({ children }) => {
     const [hasNewMatches, setHasNewMatches] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState({});
     const [activeConversationId, setActiveConversationId] = useState(null);
+    const [systemNotifications, setSystemNotifications] = useState([]);
     const socketListenersSetRef = useRef(false);
     const lastMarkedConversationRef = useRef(null);
     
@@ -42,6 +43,13 @@ export const NotificationProvider = ({ children }) => {
             
             const handleNewNotification = (notification) => {
                 console.log('Notification received:', notification);
+                
+                // Only process notifications intended for the current user
+                if (notification.target_user_id !== me.id) {
+                    console.log('Ignoring notification not intended for current user');
+                    return;
+                }
+                
                 // Handle different notification types
                 if (notification.type === 'like') {
                     console.log('Setting hasNewLikes to true');
@@ -60,6 +68,28 @@ export const NotificationProvider = ({ children }) => {
                             ...prev,
                             [conversationId]: (prev[conversationId] || 0) + 1
                         }));
+                    }
+                } else if (notification.type === 'unmatch') {
+                    // Handle unmatch notifications
+                    console.log('Unmatch notification received:', notification);
+                    
+                    // Add to system notifications
+                    const unmatchNotification = {
+                        id: Date.now(),
+                        type: 'unmatch',
+                        message: notification.message || `${notification.from_user_name} has removed the match with you`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                        fromUserId: notification.from_user_id
+                    };
+                    
+                    setSystemNotifications(prev => [unmatchNotification, ...prev]);
+                    
+                    // Refresh the page if the user is currently viewing a profile or chat that was unmatched
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes(`/user/${notification.from_user_id}`) || 
+                        currentPath === '/chats') {
+                        window.location.reload();
                     }
                 }
             };
@@ -104,9 +134,10 @@ export const NotificationProvider = ({ children }) => {
             hasNewLikes,
             hasNewMatches,
             unreadMessagesCount: Object.keys(unreadMessages).length,
-            activeConversationId
+            activeConversationId,
+            systemNotificationsCount: systemNotifications.length
         });
-    }, [hasNewLikes, hasNewMatches, unreadMessages, activeConversationId]);
+    }, [hasNewLikes, hasNewMatches, unreadMessages, activeConversationId, systemNotifications]);
     
     // Function to mark likes as read
     const markLikesAsRead = useCallback(() => {
@@ -118,6 +149,14 @@ export const NotificationProvider = ({ children }) => {
     const markMatchesAsRead = useCallback(() => {
         console.log('Marking matches as read');
         setHasNewMatches(false);
+    }, []);
+    
+    // Function to mark system notifications as read
+    const markSystemNotificationsAsRead = useCallback(() => {
+        console.log('Marking system notifications as read');
+        setSystemNotifications(prev => 
+            prev.map(notification => ({ ...notification, read: true }))
+        );
     }, []);
     
     // Function to mark messages as read for a specific conversation
@@ -166,6 +205,13 @@ export const NotificationProvider = ({ children }) => {
         return result;
     }, [unreadMessages]);
     
+    // Check if there are any system notifications
+    const hasSystemNotifications = useCallback(() => {
+        const result = systemNotifications.some(notification => !notification.read);
+        console.log('hasSystemNotifications called, result:', result);
+        return result;
+    }, [systemNotifications]);
+    
     // Get unread count for a specific conversation
     const getUnreadCount = useCallback((conversationId) => {
         return unreadMessages[conversationId] || 0;
@@ -176,12 +222,15 @@ export const NotificationProvider = ({ children }) => {
         hasNewMatches,
         unreadMessages,
         activeConversationId,
+        systemNotifications,
         markLikesAsRead,
         markMatchesAsRead,
         markMessagesAsRead,
+        markSystemNotificationsAsRead,
         clearActiveConversation,
         hasLikesNotifications,
         hasChatNotifications,
+        hasSystemNotifications,
         getUnreadCount
     };
     

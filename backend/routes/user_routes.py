@@ -44,6 +44,18 @@ def dislike_user(disliked_user_id):
 def add_test_likes():
     return UserController.add_test_likes()
 
+@user_bp.route('/has-liked-me/<int:user_id>', methods=['GET'])
+def has_liked_me(user_id):
+    return UserController.has_liked_me(user_id)
+
+@user_bp.route('/is-match/<int:user_id>', methods=['GET'])
+def is_match(user_id):
+    return UserController.is_match(user_id)
+
+@user_bp.route('/unmatch/<int:user_id>', methods=['POST'])
+def unmatch_user(user_id):
+    return UserController.unmatch_user(user_id)
+
 @user_bp.route('/<int:user_id>/profile', methods=['GET'])
 @email_verified_required
 def get_other_user_profile(user_id):

@@ -13,10 +13,13 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
         hasNewLikes, 
         hasNewMatches, 
         unreadMessages, 
+        systemNotifications,
         hasChatNotifications,
         hasLikesNotifications,
+        hasSystemNotifications,
         markLikesAsRead,
-        markMatchesAsRead
+        markMatchesAsRead,
+        markSystemNotificationsAsRead
     } = useNotifications();
 
     // Close notifications popup when clicking outside
@@ -39,10 +42,12 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
             hasNewLikes,
             hasNewMatches,
             unreadMessages,
+            systemNotifications,
             hasLikesNotifs: hasLikesNotifications(),
-            hasChatNotifs: hasChatNotifications()
+            hasChatNotifs: hasChatNotifications(),
+            hasSystemNotifs: hasSystemNotifications()
         });
-    }, [hasNewLikes, hasNewMatches, unreadMessages, hasLikesNotifications, hasChatNotifications]);
+    }, [hasNewLikes, hasNewMatches, unreadMessages, systemNotifications, hasLikesNotifications, hasChatNotifications, hasSystemNotifications]);
 
     const handleLogout = async () => {
         try {
@@ -63,13 +68,18 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
 
     const toggleNotifications = () => {
         setShowNotifications(!showNotifications);
+        
+        // Mark system notifications as read when opening the notification popup
+        if (!showNotifications) {
+            markSystemNotificationsAsRead();
+        }
     };
 
     // Calculate total unread messages
     const totalUnreadMessages = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
     
     // Check if there are any notifications - properly call the functions
-    const hasAnyNotifications = hasLikesNotifications() || hasChatNotifications();
+    const hasAnyNotifications = hasLikesNotifications() || hasChatNotifications() || hasSystemNotifications();
 
     // Handle navigation with marking notifications as read
     const handleViewLikes = () => {
@@ -82,6 +92,13 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
     const handleViewChats = () => {
         navigate('/chats');
         setShowNotifications(false);
+    };
+    
+    // Format timestamp for display
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 
+               ' ' + date.toLocaleDateString();
     };
 
     return (
@@ -103,25 +120,53 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
                         <div className="notification-popup">
                             <h3>Notifications</h3>
                             <div className="notification-list">
-                                {hasNewLikes && (
-                                    <div className="notification-item">
-                                        <p>You have new likes!</p>
-                                        <button onClick={handleViewLikes}>View Likes</button>
+                                {/* System notifications (unmatch, etc.) */}
+                                {systemNotifications.length > 0 && (
+                                    <div className="notification-section">
+                                        <h4>System Notifications</h4>
+                                        {systemNotifications.map(notification => (
+                                            <div key={notification.id} className="notification-item system-notification">
+                                                <p>{notification.message}</p>
+                                                <span className="notification-timestamp">
+                                                    {formatTimestamp(notification.timestamp)}
+                                                </span>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
-                                {hasNewMatches && (
-                                    <div className="notification-item">
-                                        <p>You have new matches!</p>
-                                        <button onClick={handleViewLikes}>View Matches</button>
+                                
+                                {/* Likes and matches notifications */}
+                                {(hasNewLikes || hasNewMatches) && (
+                                    <div className="notification-section">
+                                        <h4>Likes & Matches</h4>
+                                        {hasNewLikes && (
+                                            <div className="notification-item">
+                                                <p>You have new likes!</p>
+                                                <button onClick={handleViewLikes}>View Likes</button>
+                                            </div>
+                                        )}
+                                        {hasNewMatches && (
+                                            <div className="notification-item">
+                                                <p>You have new matches!</p>
+                                                <button onClick={handleViewLikes}>View Matches</button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
+                                
+                                {/* Messages notifications */}
                                 {totalUnreadMessages > 0 && (
-                                    <div className="notification-item">
-                                        <p>You have {totalUnreadMessages} unread message{totalUnreadMessages !== 1 ? 's' : ''}!</p>
-                                        <button onClick={handleViewChats}>View Messages</button>
+                                    <div className="notification-section">
+                                        <h4>Messages</h4>
+                                        <div className="notification-item">
+                                            <p>You have {totalUnreadMessages} unread message{totalUnreadMessages !== 1 ? 's' : ''}!</p>
+                                            <button onClick={handleViewChats}>View Messages</button>
+                                        </div>
                                     </div>
                                 )}
-                                {!hasAnyNotifications && (
+                                
+                                {/* No notifications message */}
+                                {!hasAnyNotifications && systemNotifications.length === 0 && (
                                     <div className="notification-item">
                                         <p>No new notifications</p>
                                     </div>

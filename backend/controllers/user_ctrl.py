@@ -159,37 +159,50 @@ class UserController:
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized"}), 401
         try:
+            current_user_id = session['user_id']
+            
             # Record the like interaction
             success = UserModel.create_interaction(
-                user_id=session['user_id'],
+                user_id=current_user_id,
                 target_user_id=liked_user_id,
                 interaction_type='like'
             )
             if success:
                 # Check if it's a match (both users liked each other)
-                is_match = UserModel.check_match(session['user_id'], liked_user_id)
+                is_match = UserModel.check_match(current_user_id, liked_user_id)
                 
                 # Get current user info for the notification
-                current_user = UserModel.get_by_id(session['user_id'])
+                current_user = UserModel.get_by_id(current_user_id)
                 
-                # Send notification to the liked user
+                # Send notification to the liked user (not the current user)
                 socketio.emit('new_notification', {
                     'type': 'like',
-                    'from_user_id': session['user_id'],
+                    'from_user_id': current_user_id,
                     'from_user_name': current_user.get('firstname', 'Someone'),
                     'target_user_id': liked_user_id,
                     'timestamp': datetime.now().isoformat()
-                })
+                }, room=UserModel.get_user_socket_id(liked_user_id))  # Send directly to the liked user's socket
                 
-                # If it's a match, send a match notification too
+                # If it's a match, send a match notification to both users
                 if is_match:
+                    # Send match notification to the liked user
                     socketio.emit('new_notification', {
                         'type': 'match',
-                        'from_user_id': session['user_id'],
+                        'from_user_id': current_user_id,
                         'from_user_name': current_user.get('firstname', 'Someone'),
                         'target_user_id': liked_user_id,
                         'timestamp': datetime.now().isoformat()
-                    })
+                    }, room=UserModel.get_user_socket_id(liked_user_id))
+                    
+                    # Send match notification to the current user
+                    liked_user = UserModel.get_by_id(liked_user_id)
+                    socketio.emit('new_notification', {
+                        'type': 'match',
+                        'from_user_id': liked_user_id,
+                        'from_user_name': liked_user.get('firstname', 'Someone'),
+                        'target_user_id': current_user_id,
+                        'timestamp': datetime.now().isoformat()
+                    }, room=UserModel.get_user_socket_id(current_user_id))
                 
                 return jsonify({
                     "message": "Like recorded successfully",
@@ -247,26 +260,26 @@ class UserController:
                     if success:
                         likes_added += 1
                         
-                        # Send notification for the test like
+                        # Send notification for the test like to the current user
                         socketio.emit('new_notification', {
                             'type': 'like',
                             'from_user_id': user['id'],
                             'from_user_name': user.get('firstname', 'Someone'),
                             'target_user_id': user_id,
                             'timestamp': datetime.now().isoformat()
-                        })
+                        }, room=UserModel.get_user_socket_id(user_id))
                         
                         # Check if it's a match
                         is_match = UserModel.check_match(user['id'], user_id)
                         if is_match:
-                            # Send match notification
+                            # Send match notification to the current user
                             socketio.emit('new_notification', {
                                 'type': 'match',
                                 'from_user_id': user['id'],
                                 'from_user_name': user.get('firstname', 'Someone'),
                                 'target_user_id': user_id,
                                 'timestamp': datetime.now().isoformat()
-                            })
+                            }, room=UserModel.get_user_socket_id(user_id))
                             
                 except Exception as e:
                     logging.error(f"Error adding test like from user {user['id']}: {str(e)}")
@@ -345,5 +358,76 @@ class UserController:
             logging.error(f"Error getting matches list: {str(e)}")
             return jsonify({
                 "error": "Failed to get matches list",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
+    def has_liked_me(user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            # Check if the specified user has liked the current user
+            has_liked = UserModel.has_user_liked_me(user_id, session['user_id'])
+            return jsonify({"has_liked": has_liked}), 200
+        except Exception as e:
+            logging.error(f"Error checking if user has liked me: {str(e)}")
+            return jsonify({
+                "error": "Failed to check if user has liked me",
+                "details": str(e)
+            }), 400
+            
+    @staticmethod
+    def is_match(user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            # Check if there's a match between the current user and the specified user
+            is_match = UserModel.check_match(session['user_id'], user_id)
+            return jsonify({"is_match": is_match}), 200
+        except Exception as e:
+            logging.error(f"Error checking if users are matched: {str(e)}")
+            return jsonify({
+                "error": "Failed to check if users are matched",
+                "details": str(e)
+            }), 400
+            
+    @staticmethod
+    def unmatch_user(user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            current_user_id = session['user_id']
+            
+            # Get current user info for the notification
+            current_user = UserModel.get_by_id(current_user_id)
+            
+            # Remove the like interaction from both users
+            success = UserModel.remove_like_interaction(current_user_id, user_id)
+            
+            if success:
+                # Delete the conversation between the users
+                from models.conv_model import ConversationModel
+                ConversationModel.delete_conversation(current_user_id, user_id)
+                
+                # Send notification ONLY to the other user (not the one who initiated the unmatch)
+                socketio.emit('new_notification', {
+                    'type': 'unmatch',
+                    'from_user_id': current_user_id,
+                    'from_user_name': current_user.get('firstname', 'Someone'),
+                    'target_user_id': user_id,  # This ensures only the other user gets the notification
+                    'message': f"{current_user.get('firstname', 'Someone')} has removed the match with you",
+                    'timestamp': datetime.now().isoformat()
+                }, room=UserModel.get_user_socket_id(user_id))  # Send directly to the other user's socket
+                
+                return jsonify({"message": "Successfully unmatched user and deleted conversation"}), 200
+            else:
+                return jsonify({"message": "Failed to unmatch user"}), 400
+        except Exception as e:
+            logging.error(f"Error unmatching user: {str(e)}")
+            return jsonify({
+                "error": "Failed to unmatch user",
                 "details": str(e)
             }), 400

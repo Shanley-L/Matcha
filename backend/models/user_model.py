@@ -439,3 +439,62 @@ class UserModel:
                 cursor.close()
             if 'connection' in locals() and connection:
                 connection.close()
+
+    @staticmethod
+    def has_user_liked_me(liker_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                SELECT COUNT(*) as like_count
+                FROM user_interactions
+                WHERE user_id = %s 
+                AND target_user_id = %s
+                AND interaction_type = 'like'
+            """
+            cursor.execute(query, (liker_id, target_id))
+            result = cursor.fetchone()            
+            return result[0] > 0
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in has_user_liked_me: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+                
+    @staticmethod
+    def remove_like_interaction(user1_id, user2_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # Delete like interactions in both directions
+            query = """
+                DELETE FROM user_interactions
+                WHERE (user_id = %s AND target_user_id = %s AND interaction_type = 'like')
+                OR (user_id = %s AND target_user_id = %s AND interaction_type = 'like')
+            """
+            cursor.execute(query, (user1_id, user2_id, user2_id, user1_id))
+            connection.commit()
+            
+            return True
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in remove_like_interaction: {err}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
+
+    @staticmethod
+    def get_user_socket_id(user_id):
+        """
+        Get the socket ID for a specific user from the active_users dictionary
+        """
+        from socket_manager import active_users
+        return active_users.get(str(user_id))

@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS users (
     viewers JSON,
     match_score INT DEFAULT 0,
     match_type ENUM('love', 'friends', 'fling', 'business'),
+    is_online BOOLEAN DEFAULT FALSE,
+    last_seen TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

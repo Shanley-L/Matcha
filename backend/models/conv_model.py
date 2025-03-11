@@ -229,3 +229,53 @@ class ConversationModel:
                 cursor.close()
             if connection:
                 connection.close()
+                
+    @staticmethod
+    def delete_conversation(user1_id, user2_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # First, find the conversation ID
+            query = """
+                SELECT id FROM conversations
+                WHERE (user1_id = %s AND user2_id = %s) OR (user1_id = %s AND user2_id = %s)
+            """
+            cursor.execute(query, (user1_id, user2_id, user2_id, user1_id))
+            conversation = cursor.fetchone()
+            
+            if not conversation:
+                logging.info(f"No conversation found between users {user1_id} and {user2_id}")
+                return True  # No conversation to delete
+                
+            conversation_id = conversation[0]
+            
+            # Delete all messages in the conversation
+            delete_messages_query = """
+                DELETE FROM messages
+                WHERE conversation_id = %s
+            """
+            cursor.execute(delete_messages_query, (conversation_id,))
+            
+            # Delete the conversation
+            delete_conversation_query = """
+                DELETE FROM conversations
+                WHERE id = %s
+            """
+            cursor.execute(delete_conversation_query, (conversation_id,))
+            
+            connection.commit()
+            logging.info(f"Successfully deleted conversation {conversation_id} between users {user1_id} and {user2_id}")
+            return True
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in delete_conversation: {err}")
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error in delete_conversation: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
