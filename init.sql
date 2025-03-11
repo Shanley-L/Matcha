@@ -38,6 +38,9 @@ INSERT INTO users (username, email, password, firstname, gender, looking_for, bi
     ('Caroleplay', 'carol@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Carol', 'female', 'male', 'Vétérinaire et amoureuse des animaux. Je voyage dès que possible pour découvrir la faune mondiale.', 'Vétérinaire', '1993-12-05', 'United Kingdom', 'Paris', 'Champs-Élysées', '["animals", "nature_plant", "travel_places"]', false, '["/init/carol.jpeg", "/init/carol.jpeg", "/init/carol.jpeg", "/init/carol.jpeg"]', 'love'),
     ('Nini', 'annie@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN9V3UF9T3HJGQZsuHhJi', 'Annie', 'female', 'male', 'Professeure de langues, polyglotte. J''adore découvrir de nouvelles cultures et voyager.', 'Professeure', '1990-10-14', 'Canada', 'Paris', 'Pigalle', '["language", "travel_places", "people_society"]', false, '["/init/annie.jpeg", "/init/annie.jpeg", "/init/annie.jpeg", "/init/annie.jpeg"]', 'friends');
 
+INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, town, neighbourhood, interests, is_first_login, is_email_verified, photos, match_type) VALUES
+    ('Admin', 'admin@admin.fr', 'scrypt:32768:8:1$S7D1jwJTSrom60Gb$5473cca544a5ab067c548a52c25fbf161e72815bf036389cb786933b8d0e0099f92d19abcfa230ac09b33e53e97d5543b49968fd0f762e3c6c534500a71a06a7', 'Admin', 'male', 'other', 'ADMIN, polyglotte. J''adore admin et admin.', 'Admin', '1990-10-14', 'France', 'Paris', 'CLichy', '["language", "travel_places", "people_society"]', false, true, '["/init/admin.png"]', 'friends');
+
 CREATE TABLE IF NOT EXISTS user_interactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
