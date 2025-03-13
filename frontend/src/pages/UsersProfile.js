@@ -10,6 +10,9 @@ const UsersProfile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [hasLikedMe, setHasLikedMe] = useState(false);
+    const [isMatched, setIsMatched] = useState(false);
+    const [deletingMatch, setDeletingMatch] = useState(false);
     const { userId } = useParams();
     const navigate = useNavigate();
 
@@ -53,6 +56,15 @@ const UsersProfile = () => {
             try {
                 const response = await axios.get(`/api/user/${userId}/profile`);
                 setUser(response.data);
+                
+                // Check if this user has liked the current user
+                const likedResponse = await axios.get(`/api/user/check-liked-me/${userId}`);
+                setHasLikedMe(likedResponse.data.has_liked);
+                
+                // Check if there's a match with this user
+                const matchesResponse = await axios.get('/api/user/getmatches');
+                const isUserMatched = matchesResponse.data.some(match => match.id === parseInt(userId));
+                setIsMatched(isUserMatched);
             } catch (error) {
                 console.error('Error loading user profile:', error);
                 navigate('/viewers');
@@ -77,6 +89,22 @@ const UsersProfile = () => {
 
     const handleBackClick = () => {
         navigate(-1);
+    };
+
+    const handleDeleteMatch = async () => {
+        if (window.confirm('Are you sure you want to delete this match? This will remove the match, all likes, and your conversation with this user.')) {
+            try {
+                setDeletingMatch(true);
+                await axios.post(`/api/user/delete-match/${userId}`);
+                alert('Match deleted successfully');
+                navigate('/matches');
+            } catch (error) {
+                console.error('Error deleting match:', error);
+                alert('Failed to delete match');
+            } finally {
+                setDeletingMatch(false);
+            }
+        }
     };
 
     if (loading) {
@@ -120,12 +148,27 @@ const UsersProfile = () => {
                 <div className='photo-gallery-container'>
                     {user.photos && user.photos.length > 0 ? (
                         <>
-                            <div className='photo-gallery'>
+                            <div className='photo-gallery' style={{ position: 'relative' }}>
                                 <img 
                                     src={`../shared/uploads` + user.photos[currentPhotoIndex]} 
                                     alt="user pics" 
                                     className='profile-photos'
                                 />
+                                {hasLikedMe && (
+                                    <div 
+                                        style={{
+                                            position: 'absolute',
+                                            top: '10px',
+                                            right: '10px',
+                                            color: 'red',
+                                            fontSize: '2rem',
+                                            textShadow: '0 0 5px rgba(0,0,0,0.5)',
+                                            zIndex: 10
+                                        }}
+                                    >
+                                        <i className="fas fa-heart"></i>
+                                    </div>
+                                )}
                                 <button className="gallery-nav prev" onClick={prevPhoto}>
                                     <i className="fas fa-chevron-left"></i>
                                 </button>
@@ -176,6 +219,18 @@ const UsersProfile = () => {
                                 <p>No interest available</p>
                             )}
                         </div>
+                        
+                        {isMatched && (
+                            <div className="match-actions">
+                                <button 
+                                    className="delete-match-btn"
+                                    onClick={handleDeleteMatch}
+                                    disabled={deletingMatch}
+                                >
+                                    {deletingMatch ? 'Deleting...' : 'Delete Match'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

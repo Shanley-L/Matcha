@@ -39,6 +39,16 @@ def like_user(liked_user_id):
 def dislike_user(disliked_user_id):
     return UserController.dislike_user(disliked_user_id)
 
+@user_bp.route('/check-liked-me/<int:user_id>', methods=['GET'])
+@email_verified_required
+def check_user_liked_me(user_id):
+    return UserController.check_user_liked_me(user_id)
+
+@user_bp.route('/delete-match/<int:user_id>', methods=['POST'])
+@email_verified_required
+def delete_match(user_id):
+    return UserController.delete_match(user_id)
+
 @user_bp.route('/add-test-likes', methods=['POST'])
 @email_verified_required
 def add_test_likes():

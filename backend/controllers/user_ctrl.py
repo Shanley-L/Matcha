@@ -260,6 +260,22 @@ class UserController:
             }), 400
 
     @staticmethod
+    def check_user_liked_me(target_user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            # Check if target user has liked the current user
+            has_liked = UserModel.has_user_liked_me(session['user_id'], target_user_id)
+            return jsonify({"has_liked": has_liked}), 200
+        except Exception as e:
+            logging.error(f"Error checking if user has liked: {str(e)}")
+            return jsonify({
+                "error": "Failed to check if user has liked",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
     def get_user_profile_by_id(target_user_id):
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized by session"}), 401
@@ -305,5 +321,28 @@ class UserController:
             logging.error(f"Error getting matches list: {str(e)}")
             return jsonify({
                 "error": "Failed to get matches list",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
+    def delete_match(target_user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        try:
+            # Check if there's actually a match between the users
+            is_match = UserModel.check_match(session['user_id'], target_user_id)
+            if not is_match:
+                return jsonify({"error": "No match exists between these users"}), 400
+                
+            # Delete the match
+            success = UserModel.delete_match(session['user_id'], target_user_id)
+            if success:
+                return jsonify({"message": "Match deleted successfully"}), 200
+            else:
+                return jsonify({"error": "Failed to delete match"}), 400
+        except Exception as e:
+            logging.error(f"Error deleting match: {str(e)}")
+            return jsonify({
+                "error": "Failed to delete match",
                 "details": str(e)
             }), 400

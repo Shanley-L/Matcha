@@ -320,6 +320,34 @@ class UserModel:
                 connection.close()
 
     @staticmethod
+    def has_user_liked_me(current_user_id, target_user_id):
+        """
+        Check if target_user_id has liked current_user_id
+        """
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                SELECT COUNT(*) as like_count
+                FROM user_interactions
+                WHERE user_id = %s 
+                AND target_user_id = %s
+                AND interaction_type = 'like'
+            """
+            cursor.execute(query, (target_user_id, current_user_id))
+            result = cursor.fetchone()            
+            return result[0] > 0
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in has_user_liked_me: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
     def get_potential_matches(current_user_id, min_age=None, max_age=None):
         try:
             connection = mysql.connector.connect(**db_config)
@@ -434,6 +462,43 @@ class UserModel:
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_matches_list: {err}")
             return []
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def delete_match(user_id, target_user_id):
+        """
+        Delete a match between two users by removing their interactions and conversation
+        """
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # First, delete the conversation between the users
+            conv_query = """
+                DELETE FROM conversations 
+                WHERE (user1_id = %s AND user2_id = %s) 
+                OR (user1_id = %s AND user2_id = %s)
+            """
+            cursor.execute(conv_query, (user_id, target_user_id, target_user_id, user_id))
+            
+            # Then, delete the interactions between the users
+            interaction_query = """
+                DELETE FROM user_interactions 
+                WHERE (user_id = %s AND target_user_id = %s) 
+                OR (user_id = %s AND target_user_id = %s)
+            """
+            cursor.execute(interaction_query, (user_id, target_user_id, target_user_id, user_id))
+            
+            connection.commit()
+            return True
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in delete_match: {err}")
+            return False
         finally:
             if 'cursor' in locals() and cursor:
                 cursor.close()
