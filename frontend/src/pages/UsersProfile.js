@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
+import ConfirmationPopup from '../components/ConfirmationPopup';
 import axios from '../config/axios';
 import '../styles/pages/shared.css';
 import '../styles/pages/Profile.css';
@@ -13,6 +14,8 @@ const UsersProfile = () => {
     const [hasLikedMe, setHasLikedMe] = useState(false);
     const [isMatched, setIsMatched] = useState(false);
     const [deletingMatch, setDeletingMatch] = useState(false);
+    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+    const [deleteSuccess, setDeleteSuccess] = useState(false);
     const { userId } = useParams();
     const navigate = useNavigate();
 
@@ -91,20 +94,30 @@ const UsersProfile = () => {
         navigate(-1);
     };
 
-    const handleDeleteMatch = async () => {
-        if (window.confirm('Are you sure you want to delete this match? This will remove the match, all likes, and your conversation with this user.')) {
-            try {
-                setDeletingMatch(true);
-                await axios.post(`/api/user/delete-match/${userId}`);
-                alert('Match deleted successfully');
+    const handleDeleteMatchClick = () => {
+        setShowDeleteConfirmation(true);
+    };
+
+    const handleDeleteMatchConfirm = async () => {
+        try {
+            setDeletingMatch(true);
+            await axios.post(`/api/user/delete-match/${userId}`);
+            setDeleteSuccess(true);
+            setTimeout(() => {
                 navigate('/matches');
-            } catch (error) {
-                console.error('Error deleting match:', error);
-                alert('Failed to delete match');
-            } finally {
-                setDeletingMatch(false);
-            }
+            }, 1500);
+        } catch (error) {
+            console.error('Error deleting match:', error);
+            setShowDeleteConfirmation(false);
+            // Show error message
+            alert('Failed to delete match. Please try again.');
+        } finally {
+            setDeletingMatch(false);
         }
+    };
+
+    const handleCloseConfirmation = () => {
+        setShowDeleteConfirmation(false);
     };
 
     if (loading) {
@@ -224,16 +237,41 @@ const UsersProfile = () => {
                             <div className="match-actions">
                                 <button 
                                     className="delete-match-btn"
-                                    onClick={handleDeleteMatch}
+                                    onClick={handleDeleteMatchClick}
                                     disabled={deletingMatch}
                                 >
-                                    {deletingMatch ? 'Deleting...' : 'Delete Match'}
+                                    Delete Match
                                 </button>
                             </div>
                         )}
                     </div>
                 )}
             </div>
+            
+            {/* Confirmation Popup for Delete Match */}
+            <ConfirmationPopup 
+                isOpen={showDeleteConfirmation}
+                onClose={handleCloseConfirmation}
+                onConfirm={handleDeleteMatchConfirm}
+                title="Delete Match"
+                message="Are you sure you want to procede? This will remove the match and your conversation with this user."
+                confirmText="Delete"
+                cancelText="Cancel"
+                isLoading={deletingMatch}
+            />
+            
+            {/* Success Popup */}
+            <ConfirmationPopup 
+                isOpen={deleteSuccess}
+                onClose={() => navigate('/matches')}
+                onConfirm={() => navigate('/matches')}
+                title="Success"
+                message="Match deleted successfully!"
+                confirmText=""
+                cancelText=""
+                isLoading={false}
+            />
+            
             <BottomNavBar />
         </div>
     );
