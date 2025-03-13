@@ -17,14 +17,12 @@ const NotificationBell = () => {
     console.log('NotificationBell: Unread count:', unreadCount);
   }, [notifications, unreadCount]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -37,8 +35,6 @@ const NotificationBell = () => {
     if (!isOpen && unreadCount > 0) {
       console.log('NotificationBell: Marking all notifications as read');
       markAllAsRead();
-      
-      // Call API to mark all notifications as read
       try {
         await axios.post('/api/user/notifications/read');
         console.log('NotificationBell: All notifications marked as read on server');
@@ -51,16 +47,12 @@ const NotificationBell = () => {
   const handleNotificationClick = async (notification) => {
     console.log('NotificationBell: Notification clicked:', notification);
     markAsRead(notification.id);
-    
-    // Call API to mark this notification as read
     try {
       await axios.post(`/api/user/notifications/read/${notification.id}`);
       console.log(`NotificationBell: Notification ${notification.id} marked as read on server`);
     } catch (error) {
       console.error(`NotificationBell: Error marking notification ${notification.id} as read:`, error);
     }
-    
-    // Navigate based on notification type
     switch (notification.type) {
       case 'like':
         console.log('NotificationBell: Navigating to /likes');
@@ -71,23 +63,16 @@ const NotificationBell = () => {
         navigate('/chats');
         break;
       case 'message':
-        if (notification.data?.conversation_id) {
-          console.log(`NotificationBell: Navigating to /chats?conversation=${notification.data.conversation_id}`);
-          navigate(`/chats?conversation=${notification.data.conversation_id}`);
-        } else {
-          console.log('NotificationBell: Navigating to /chats (no conversation ID)');
-          navigate('/chats');
-        }
+        navigate('/chats');
         break;
       case 'unmatch':
         console.log('NotificationBell: Navigating to /matches');
-        navigate('/matches');
+        navigate('/likes');
         break;
       default:
         console.log('NotificationBell: Navigating to / (default case)');
-        navigate('/');
+        navigate('/home');
     }
-    
     setIsOpen(false);
   };
 
@@ -95,8 +80,7 @@ const NotificationBell = () => {
   const formatRelativeTime = (timestamp) => {
     const now = new Date();
     const notificationTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - notificationTime) / 1000);
-    
+    const diffInSeconds = Math.floor(((now - notificationTime) / 1000)- 3600);
     if (diffInSeconds < 60) {
       return 'just now';
     } else if (diffInSeconds < 3600) {
