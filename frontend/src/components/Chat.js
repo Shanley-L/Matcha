@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from '../config/axios';
 import { useWhoAmI } from '../context/WhoAmIContext';
+import { useNotifications } from '../context/NotificationContext';
 import '../styles/components/Chat.css';
 
 const Chat = ({ conversationId, otherUser }) => {
@@ -14,6 +15,7 @@ const Chat = ({ conversationId, otherUser }) => {
     const typingTimeoutRef = useRef(null);
     const processedMessageIdsRef = useRef(new Set());
     const { socket, me } = useWhoAmI();
+    const { setActiveConversation } = useNotifications();
 
     // Debug function to log messages state
     useEffect(() => {
@@ -28,6 +30,19 @@ const Chat = ({ conversationId, otherUser }) => {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    // Set active conversation when component mounts
+    useEffect(() => {
+        if (conversationId) {
+            console.log('Chat: Setting active conversation:', conversationId);
+            setActiveConversation(conversationId);
+        }
+        
+        return () => {
+            console.log('Chat: Clearing active conversation');
+            setActiveConversation(null);
+        };
+    }, [conversationId, setActiveConversation]);
 
     // Fetch messages
     useEffect(() => {
@@ -91,9 +106,6 @@ const Chat = ({ conversationId, otherUser }) => {
         console.log(`Joining conversation room: ${conversationId}`);
         socket.emit('join', { conversation_id: conversationId });
         
-        // Also emit join_chat event for tracking active conversations
-        socket.emit('join_chat', { conversation_id: conversationId });
-        
         // Mark all message notifications from this conversation as read
         try {
             axios.post(`/api/user/notifications/read/type/message`);
@@ -132,7 +144,8 @@ const Chat = ({ conversationId, otherUser }) => {
                     processedMessageIdsRef.current.add(newMsg.id);
                     console.log('Added message ID to processed set:', newMsg.id);
                 }
-                // Check if this message is already in our state
+                
+                // Add the message to our state
                 setMessages(prev => {
                     // More robust duplicate detection
                     const isDuplicate = prev.some(msg => {
@@ -169,6 +182,7 @@ const Chat = ({ conversationId, otherUser }) => {
                 });
             }
         };
+        
         // Listen for typing status
         const handleTypingStatus = (data) => {
             console.log('Typing status received:', data);
@@ -191,9 +205,6 @@ const Chat = ({ conversationId, otherUser }) => {
             if (hasJoined) {
                 console.log(`Leaving conversation room: ${conversationId}`);
                 socket.emit('leave_conversation', { conversation_id: conversationId });
-                
-                // Also emit leave_chat event for tracking active conversations
-                socket.emit('leave_chat', { conversation_id: conversationId });
             }
         };
     }, [socket, conversationId, me?.id]);

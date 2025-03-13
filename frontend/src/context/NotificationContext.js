@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useWhoAmI } from './WhoAmIContext';
+import axios from '../config/axios';
 
 // Create the context
 const NotificationContext = createContext();
@@ -16,6 +17,7 @@ export const useNotifications = () => {
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeConversation, setActiveConversation] = useState(null);
   const { socket, me } = useWhoAmI();
 
   // Add a new notification
@@ -78,6 +80,54 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(0);
   }, []);
 
+  // Set active conversation
+  const setActiveConversationId = useCallback((conversationId) => {
+    console.log('NotificationContext: Setting active conversation:', conversationId);
+    
+    // Only update if the value is actually changing
+    setActiveConversation(prevConversation => {
+      if (prevConversation === conversationId) return prevConversation;
+      
+      // Tell the backend about the active conversation change
+      if (socket) {
+        if (conversationId) {
+          console.log(`Telling backend user is now active in conversation: ${conversationId}`);
+          socket.emit('join_chat', { conversation_id: conversationId });
+        } else if (prevConversation) {
+          console.log(`Telling backend user is no longer active in conversation: ${prevConversation}`);
+          socket.emit('leave_chat', { conversation_id: prevConversation });
+        }
+      }
+      
+      // Mark all message notifications for this conversation as read
+      if (conversationId) {
+        try {
+          axios.post(`/api/user/notifications/read/type/message`);
+          console.log(`Marked all message notifications as read for conversation ${conversationId}`);
+          
+          setNotifications(prev => {
+            const updated = prev.map(notification => {
+              if (
+                notification.type === 'message' && 
+                notification.data?.conversation_id === conversationId && 
+                !notification.read
+              ) {
+                setUnreadCount(count => Math.max(0, count - 1));
+                return { ...notification, read: true };
+              }
+              return notification;
+            });
+            return updated;
+          });
+        } catch (error) {
+          console.error(`Error marking message notifications as read:`, error);
+        }
+      }
+      
+      return conversationId;
+    });
+  }, [socket]);
+
   // Listen for socket notifications
   useEffect(() => {
     if (!socket || !me) {
@@ -91,9 +141,36 @@ export const NotificationProvider = ({ children }) => {
 
     console.log('NotificationContext: Setting up notification listeners for user', me.id);
 
-    // Handle new notifications
-    const handleNewNotification = (data) => {
-      console.log('New notification received:', data);
+    // Function to generate notification message based on type
+    const getNotificationMessage = (data) => {
+      switch (data.type) {
+        case 'match':
+          return `You matched with ${data.user?.firstname || 'someone new'}!`;
+        case 'like':
+          return `${data.user?.firstname || 'Someone'} liked your profile!`;
+        case 'message':
+          return `New message from ${data.sender?.firstname || 'someone'}`;
+        case 'unmatch':
+          return `${data.user?.firstname || 'Someone'} unmatched with you`;
+        default:
+          return 'You have a new notification';
+      }
+    };
+
+    // Handle all types of notifications
+    const handleNotification = (data) => {
+      console.log('Notification received:', data);
+      
+      // Skip message notifications for the active conversation
+      if (
+        data.type === 'message' && 
+        activeConversation && 
+        (data.conversation_id === activeConversation || 
+         data.conversation_id === activeConversation.toString())
+      ) {
+        console.log('NotificationContext: Skipping notification for active conversation:', activeConversation);
+        return;
+      }
       
       // Generate a unique ID if not provided
       const notificationId = data.id || `${data.type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -112,37 +189,8 @@ export const NotificationProvider = ({ children }) => {
       addNotification(notification);
     };
 
-    // Function to generate notification message based on type
-    const getNotificationMessage = (data) => {
-      switch (data.type) {
-        case 'match':
-          return `You matched with ${data.user?.firstname || 'someone new'}!`;
-        case 'like':
-          return `${data.user?.firstname || 'Someone'} liked your profile!`;
-        case 'message':
-          return `New message from ${data.sender?.firstname || 'someone'}`;
-        case 'unmatch':
-          return `${data.user?.firstname || 'Someone'} unmatched with you`;
-        default:
-          return 'You have a new notification';
-      }
-    };
-
-    // Debug socket connection
-    socket.on('connect', () => {
-      console.log('NotificationContext: Socket connected');
-    });
-
-    socket.on('disconnect', () => {
-      console.log('NotificationContext: Socket disconnected');
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('NotificationContext: Socket connection error:', error);
-    });
-
     // Set up socket listeners
-    socket.on('new_notification', handleNewNotification);
+    socket.on('new_notification', handleNotification);
     console.log('NotificationContext: Listening for "new_notification" events');
     
     // Also listen for broadcast notifications (fallback)
@@ -152,37 +200,15 @@ export const NotificationProvider = ({ children }) => {
       // Only process if this notification is for the current user
       if (data.target_user_id && data.target_user_id === me.id) {
         console.log('NotificationContext: Processing broadcast notification for current user');
-        handleNewNotification(data);
+        handleNotification(data);
       } else {
         console.log('NotificationContext: Ignoring broadcast notification for other user');
       }
     });
     
-    // Also listen for new messages as notifications
-    socket.on('new_message', (data) => {
-      console.log('NotificationContext: New message received:', data);
-      // Only create notification if the message is from someone else
-      const senderId = data.message?.sender?.id || data.sender_id;
-      if (senderId && senderId !== me.id) {
-        const senderName = data.message?.sender?.firstname || 'Someone';
-        const messageContent = data.message?.message || data.content || '';
-        
-        console.log('NotificationContext: Creating notification from message');
-        handleNewNotification({
-          type: 'message',
-          id: `message-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          sender: {
-            id: senderId,
-            firstname: senderName
-          },
-          conversation_id: data.conversation_id,
-          message: messageContent,
-          timestamp: data.timestamp || new Date().toISOString()
-        });
-      } else {
-        console.log('NotificationContext: Skipping notification for own message');
-      }
-    });
+    // We no longer need to listen for new_message events here since the backend
+    // will send proper notifications through new_notification events
+    // The Chat component will handle the actual message display
     
     // Listen for notification read events
     socket.on('notification_read', (data) => {
@@ -220,7 +246,6 @@ export const NotificationProvider = ({ children }) => {
       console.log('NotificationContext: Cleaning up socket listeners');
       socket.off('new_notification');
       socket.off('broadcast_notification');
-      socket.off('new_message');
       socket.off('notification_read');
       socket.off('notification_type_read');
       socket.off('all_notifications_read');
@@ -228,7 +253,7 @@ export const NotificationProvider = ({ children }) => {
       socket.off('disconnect');
       socket.off('connect_error');
     };
-  }, [socket, me, addNotification, markAsRead, markAllAsRead]);
+  }, [socket, me, addNotification, markAsRead, markAllAsRead, activeConversation]);
 
   // Value to be provided by the context
   const value = {
@@ -238,7 +263,9 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markAllAsRead,
     clearNotification,
-    clearAllNotifications
+    clearAllNotifications,
+    activeConversation,
+    setActiveConversation: setActiveConversationId
   };
 
   return (
