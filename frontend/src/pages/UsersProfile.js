@@ -16,7 +16,7 @@ const UsersProfile = () => {
     const navigate = useNavigate();
     const [isBlocked, setIsBlocked] = useState(false);
     const [isReported, setIsReported] = useState(false);
-
+    const [isConnected, setIsConnected] = useState(false);
 
     // Available interests for selection (same as Profile.js)
     const availableInterests = [
@@ -58,6 +58,7 @@ const UsersProfile = () => {
             try {
                 const response = await axios.get(`/api/user/${userId}/profile`);
                 setUser(response.data);
+                setIsConnected(response.data.is_connected);
             } catch (error) {
                 console.error('Error loading user profile:', error);
                 navigate('/viewers');
@@ -67,6 +68,8 @@ const UsersProfile = () => {
         };
         loadUserProfile();
     }, [userId, navigate]);
+
+    console.log(user);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -273,7 +276,34 @@ const UsersProfile = () => {
                                 )}
                             </div>
                         </div>
-
+                        <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '6px',
+                                marginTop: '4px',
+                                fontSize: '0.9rem',
+                                color: isConnected ? '#28a745' : '#666'
+                            }}>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: isConnected ? '#28a745' : '#666',
+                                    marginRight: '4px'
+                                }}></div>
+                                {isConnected ? (
+                                    'Online'
+                                ) : (
+                                    user.latest_connection && (
+                                        `Last seen ${new Date(user.latest_connection).toLocaleString('fr-FR', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}`
+                                    )
+                                )}
+                            </div>
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
                         {user.bio && <p>{user.bio}</p>}
