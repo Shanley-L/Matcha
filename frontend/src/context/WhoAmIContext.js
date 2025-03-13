@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import axios from '../config/axios';
 import { io } from 'socket.io-client';
+import socketConfig from '../config/socketConfig';
 
 const WhoAmIContext = createContext();
 
@@ -37,16 +38,23 @@ export const WhoAmIProvider = ({ children }) => {
         if (!me || socketInitializedRef.current || !me.id) return;
         
         console.log('Initializing socket connection for user:', me.id);
+        console.log('Using socket URL:', socketConfig.url);
         socketInitializedRef.current = true;
         
-        const newSocket = io('http://localhost:5000', {
-            withCredentials: true,
-            reconnectionAttempts: 3,
-            timeout: 10000,
+        const newSocket = io(socketConfig.url, {
+            ...socketConfig.options,
+            query: {
+                user_id: me.id
+            }
         });
         
         newSocket.on('connect', () => {
             console.log('Socket connected successfully');
+            console.log('Socket ID:', newSocket.id);
+            
+            // Explicitly join the user's personal room for notifications
+            console.log(`Explicitly joining room: user_${me.id}`);
+            newSocket.emit('join_room', { room: `user_${me.id}` });
         });
         
         newSocket.on('connect_error', (error) => {
@@ -57,6 +65,11 @@ export const WhoAmIProvider = ({ children }) => {
         newSocket.on('disconnect', () => {
             console.log('Socket disconnected');
             socketInitializedRef.current = false;
+        });
+        
+        // Debug event to check if we're receiving any events
+        newSocket.onAny((event, ...args) => {
+            console.log(`Socket event received: ${event}`, args);
         });
         
         socketRef.current = newSocket;

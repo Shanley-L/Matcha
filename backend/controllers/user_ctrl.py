@@ -5,6 +5,8 @@ import os
 from werkzeug.utils import secure_filename
 import uuid
 import logging
+from app import socketio
+from socket_manager import active_users
 
 class UserController:
     UPLOAD_FOLDER = './shared/uploads/usersPictures'
@@ -157,6 +159,16 @@ class UserController:
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized"}), 401
         try:
+            logging.info(f"User {session['user_id']} is liking user {liked_user_id}")
+            
+            # Get user info for notification
+            current_user = UserModel.get_by_id(session['user_id'])
+            target_user = UserModel.get_by_id(liked_user_id)
+            
+            if not current_user or not target_user:
+                logging.error(f"User not found. Current user exists: {bool(current_user)}, Target user exists: {bool(target_user)}")
+                return jsonify({"message": "User not found"}), 404
+                
             # Record the like interaction
             success = UserModel.create_interaction(
                 user_id=session['user_id'],
@@ -166,11 +178,123 @@ class UserController:
             if success:
                 # Check if it's a match (both users liked each other)
                 is_match = UserModel.check_match(session['user_id'], liked_user_id)
+                logging.info(f"Like recorded successfully. Is match: {is_match}")
+                
+                # Prepare notification data
+                like_notification = {
+                    'type': 'like',
+                    'user': {
+                        'id': current_user['id'],
+                        'firstname': current_user.get('firstname', ''),
+                        'username': current_user.get('username', '')
+                    },
+                    'timestamp': UserModel.get_current_timestamp()
+                }
+                
+                # Send like notification to the target user
+                target_room = f"user_{liked_user_id}"
+                logging.info(f"Sending like notification to room {target_room}: {like_notification}")
+                
+                # Debug: Check if the room exists in the Socket.IO server
+                rooms = socketio.server.manager.rooms
+                logging.info(f"Available rooms: {list(rooms.keys())}")
+                
+                # Check if the target user's room exists
+                target_room_key = f"/{target_room}"  # Socket.IO prefixes rooms with '/'
+                if target_room_key in rooms:
+                    logging.info(f"Room {target_room} exists with {len(rooms[target_room_key])} clients")
+                else:
+                    logging.warning(f"Room {target_room} does not exist")
+                
+                socketio.emit('new_notification', like_notification, room=target_room)
+                
+                # Also try sending directly to the user's socket ID if they're active
+                if liked_user_id in socketio.server.manager.rooms:
+                    logging.info(f"User {liked_user_id} is in active rooms")
+                
+                if liked_user_id in active_users:
+                    sid = active_users[liked_user_id]
+                    logging.info(f"Also sending like notification directly to user's SID {sid}")
+                    socketio.emit('new_notification', like_notification, room=sid)
+                
+                logging.info(f"Like notification sent to user {liked_user_id}")
+                
+                # If it's a match, send match notification to both users
+                if is_match:
+                    logging.info(f"It's a match! Sending match notifications to both users")
+                    
+                    # Create match notification for target user
+                    target_match_notification = {
+                        'type': 'match',
+                        'user': {
+                            'id': current_user['id'],
+                            'firstname': current_user.get('firstname', ''),
+                            'username': current_user.get('username', '')
+                        },
+                        'timestamp': UserModel.get_current_timestamp()
+                    }
+                    
+                    # Create match notification for current user
+                    current_match_notification = {
+                        'type': 'match',
+                        'user': {
+                            'id': target_user['id'],
+                            'firstname': target_user.get('firstname', ''),
+                            'username': target_user.get('username', '')
+                        },
+                        'timestamp': UserModel.get_current_timestamp()
+                    }
+                    
+                    # Send match notifications to target user
+                    logging.info(f"Sending match notification to {target_room}: {target_match_notification}")
+                    socketio.emit('new_notification', target_match_notification, room=target_room)
+                    
+                    # Also try sending directly to the target user's socket ID if they're active
+                    if liked_user_id in active_users:
+                        sid = active_users[liked_user_id]
+                        logging.info(f"Also sending match notification directly to target user's SID {sid}")
+                        socketio.emit('new_notification', target_match_notification, room=sid)
+                    
+                    # Also broadcast the match notification to all clients as a fallback for target user
+                    logging.info(f"Broadcasting match notification as fallback for target user")
+                    socketio.emit('broadcast_notification', {
+                        **target_match_notification,
+                        'target_user_id': liked_user_id
+                    })
+                    
+                    # Send match notification to current user
+                    current_room = f"user_{session['user_id']}"
+                    logging.info(f"Sending match notification to {current_room}: {current_match_notification}")
+                    socketio.emit('new_notification', current_match_notification, room=current_room)
+                    
+                    # Also try sending directly to the current user's socket ID if they're active
+                    if str(session['user_id']) in active_users:
+                        current_sid = active_users[str(session['user_id'])]
+                        logging.info(f"Also sending match notification directly to current user's SID {current_sid}")
+                        socketio.emit('new_notification', current_match_notification, room=current_sid)
+                    
+                    # Also broadcast the match notification to all clients as a fallback for current user
+                    logging.info(f"Broadcasting match notification as fallback for current user")
+                    socketio.emit('broadcast_notification', {
+                        **current_match_notification,
+                        'target_user_id': session['user_id']
+                    })
+                    
+                    logging.info(f"Match notifications sent to both users")
+                
+                # Also broadcast the notification to all clients as a fallback
+                logging.info(f"Broadcasting notification as fallback")
+                socketio.emit('broadcast_notification', {
+                    **like_notification,
+                    'target_user_id': liked_user_id
+                })
+                
                 return jsonify({
                     "message": "Like recorded successfully",
                     "is_match": is_match
                 }), 200
             else:
+                logging.error("Failed to record like in database")
                 return jsonify({"message": "Failed to record like"}), 400
         except Exception as e:
             logging.error(f"Error recording like: {str(e)}")
@@ -329,6 +453,13 @@ class UserController:
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized"}), 401
         try:
+            # Get user info for notification
+            current_user = UserModel.get_by_id(session['user_id'])
+            target_user = UserModel.get_by_id(target_user_id)
+            
+            if not current_user or not target_user:
+                return jsonify({"message": "User not found"}), 404
+                
             # Check if there's actually a match between the users
             is_match = UserModel.check_match(session['user_id'], target_user_id)
             if not is_match:
@@ -337,6 +468,35 @@ class UserController:
             # Delete the match
             success = UserModel.delete_match(session['user_id'], target_user_id)
             if success:
+                # Create unmatch notification
+                unmatch_notification = {
+                    'type': 'unmatch',
+                    'user': {
+                        'id': current_user['id'],
+                        'firstname': current_user.get('firstname', ''),
+                        'username': current_user.get('username', '')
+                    },
+                    'timestamp': UserModel.get_current_timestamp()
+                }
+                
+                # Send unmatch notification to the target user
+                target_room = f"user_{target_user_id}"
+                logging.info(f"Sending unmatch notification to room {target_room}")
+                socketio.emit('new_notification', unmatch_notification, room=target_room)
+                
+                # Also try sending directly to the user's socket ID if they're active
+                if target_user_id in active_users:
+                    sid = active_users[target_user_id]
+                    logging.info(f"Also sending unmatch notification directly to user's SID {sid}")
+                    socketio.emit('new_notification', unmatch_notification, room=sid)
+                
+                # Also broadcast the notification to all clients as a fallback
+                logging.info(f"Broadcasting unmatch notification as fallback")
+                socketio.emit('broadcast_notification', {
+                    **unmatch_notification,
+                    'target_user_id': target_user_id
+                })
+                
                 return jsonify({"message": "Match deleted successfully"}), 200
             else:
                 return jsonify({"error": "Failed to delete match"}), 400
@@ -344,5 +504,55 @@ class UserController:
             logging.error(f"Error deleting match: {str(e)}")
             return jsonify({
                 "error": "Failed to delete match",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
+    def mark_notification_read(notification_id=None, notification_type=None):
+        """Mark a notification as read"""
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+            
+        try:
+            user_id = session['user_id']
+            
+            # Emit a notification_read event to the user's room
+            user_room = f"user_{user_id}"
+            
+            if notification_id:
+                # Mark a specific notification as read
+                logging.info(f"Marking notification {notification_id} as read for user {user_id}")
+                socketio.emit('notification_read', {
+                    'notification_id': notification_id
+                }, room=user_room)
+                
+                return jsonify({
+                    "message": f"Notification {notification_id} marked as read"
+                }), 200
+                
+            elif notification_type:
+                # Mark all notifications of a specific type as read
+                logging.info(f"Marking all notifications of type {notification_type} as read for user {user_id}")
+                socketio.emit('notification_type_read', {
+                    'notification_type': notification_type
+                }, room=user_room)
+                
+                return jsonify({
+                    "message": f"All notifications of type {notification_type} marked as read"
+                }), 200
+                
+            else:
+                # Mark all notifications as read
+                logging.info(f"Marking all notifications as read for user {user_id}")
+                socketio.emit('all_notifications_read', {}, room=user_room)
+                
+                return jsonify({
+                    "message": "All notifications marked as read"
+                }), 200
+                
+        except Exception as e:
+            logging.error(f"Error marking notification as read: {str(e)}")
+            return jsonify({
+                "error": "Failed to mark notification as read",
                 "details": str(e)
             }), 400

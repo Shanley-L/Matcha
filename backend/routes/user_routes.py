@@ -58,3 +58,15 @@ def add_test_likes():
 @email_verified_required
 def get_other_user_profile(user_id):
     return UserController.get_user_profile_by_id(user_id)
+
+@user_bp.route('/notifications/read', methods=['POST'])
+def mark_all_notifications_read():
+    return UserController.mark_notification_read()
+
+@user_bp.route('/notifications/read/<notification_id>', methods=['POST'])
+def mark_notification_read(notification_id):
+    return UserController.mark_notification_read(notification_id=notification_id)
+
+@user_bp.route('/notifications/read/type/<notification_type>', methods=['POST'])
+def mark_notification_type_read(notification_type):
+    return UserController.mark_notification_read(notification_type=notification_type)

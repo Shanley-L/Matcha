@@ -4,6 +4,7 @@ from models.conv_model import ConversationModel
 from models.msg_model import MessageModel
 from models.user_model import UserModel
 from app import socketio
+from socket_manager import active_users, active_conversations
 import logging
 import json
 from datetime import datetime
@@ -90,10 +91,77 @@ class ConversationController:
                     }
                 }
                 
-                # Use socketio instance to emit the message
-                # We can't use skip_sid in a regular HTTP route, so we'll rely on client-side deduplication
+                # Use socketio instance to emit the message to the conversation room
                 room = str(conversation_id)
+                logging.info(f"Sending message to conversation room {room}")
                 socketio.emit('new_message', socket_message, room=room)
+                
+                # Find the other user in the conversation to send them a direct notification
+                # Get conversation participants
+                conversation = ConversationModel.get_conversation_by_id(conversation_id)
+                if conversation:
+                    # Determine the recipient user ID
+                    recipient_id = None
+                    if conversation.get('user1_id') == session['user_id']:
+                        recipient_id = conversation.get('user2_id')
+                    else:
+                        recipient_id = conversation.get('user1_id')
+                    
+                    if recipient_id:
+                        # Check if recipient is already active in this conversation
+                        is_recipient_active = (
+                            recipient_id in active_conversations and 
+                            active_conversations[recipient_id] == str(conversation_id)
+                        )
+                        
+                        if is_recipient_active:
+                            logging.info(f"Recipient {recipient_id} is already active in conversation {conversation_id}, skipping notification")
+                        else:
+                            # Send notification directly to recipient's room
+                            recipient_room = f"user_{recipient_id}"
+                            logging.info(f"Sending message notification to user room {recipient_room}")
+                            socketio.emit('new_notification', {
+                                'type': 'message',
+                                'sender': {
+                                    'id': sender['id'],
+                                    'firstname': sender.get('firstname', ''),
+                                    'username': sender.get('username', '')
+                                },
+                                'conversation_id': str(conversation_id),
+                                'content': message.get('message', ''),
+                                'timestamp': message.get('created_at')
+                            }, room=recipient_room)
+                            
+                            # Also try sending directly to the user's socket ID if they're active
+                            if recipient_id in active_users:
+                                sid = active_users[recipient_id]
+                                logging.info(f"Also sending message notification directly to user's SID {sid}")
+                                socketio.emit('new_notification', {
+                                    'type': 'message',
+                                    'sender': {
+                                        'id': sender['id'],
+                                        'firstname': sender.get('firstname', ''),
+                                        'username': sender.get('username', '')
+                                    },
+                                    'conversation_id': str(conversation_id),
+                                    'content': message.get('message', ''),
+                                    'timestamp': message.get('created_at')
+                                }, room=sid)
+                            
+                            # Also broadcast the notification to all clients as a fallback
+                            logging.info(f"Broadcasting message notification as fallback")
+                            socketio.emit('broadcast_notification', {
+                                'type': 'message',
+                                'sender': {
+                                    'id': sender['id'],
+                                    'firstname': sender.get('firstname', ''),
+                                    'username': sender.get('username', '')
+                                },
+                                'conversation_id': str(conversation_id),
+                                'content': message.get('message', ''),
+                                'timestamp': message.get('created_at'),
+                                'target_user_id': recipient_id
+                            })
                 
                 # Prepare message for JSON response
                 response_message = dict(message)

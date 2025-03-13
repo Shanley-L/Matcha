@@ -2,6 +2,7 @@ import React from 'react';
 import { IoSettingsSharp, IoLogOutOutline, IoEye } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
+import NotificationBell from './NotificationBell';
 import '../styles/components/PageHeader.css';
 
 const PageHeader = ({ showSettings, onSettingsClick}) => {
@@ -33,6 +34,7 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
                 </div>
             </div>
             <div className="header-buttons">
+                <NotificationBell />
                 {showSettings && (
                     <button className="settings-button" onClick={onSettingsClick}>
                         <IoSettingsSharp />

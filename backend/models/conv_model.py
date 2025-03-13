@@ -201,3 +201,40 @@ class ConversationModel:
                 cursor.close()
             if connection:
                 connection.close()
+
+    @staticmethod
+    def get_conversation_by_id(conversation_id):
+        """Get a conversation by its ID"""
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+            
+            # Get the conversation with basic details
+            query = """
+                SELECT id, user1_id, user2_id, created_at
+                FROM conversations
+                WHERE id = %s
+            """
+            cursor.execute(query, (conversation_id,))
+            conversation = cursor.fetchone()
+            
+            if not conversation:
+                return None
+                
+            # Convert datetime to ISO format string if needed
+            if isinstance(conversation['created_at'], datetime):
+                conversation['created_at'] = conversation['created_at'].isoformat()
+                
+            return conversation
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_conversation_by_id: {err}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in get_conversation_by_id: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()

@@ -157,7 +157,6 @@ const UsersProfile = () => {
                     ></i>
                     <h1 style={{ margin: 0, fontSize: '1.5rem' }}>User Profile</h1>
                 </div>
-
                 <div className='photo-gallery-container'>
                     {user.photos && user.photos.length > 0 ? (
                         <>
@@ -203,7 +202,6 @@ const UsersProfile = () => {
                         <p>No photos available</p>
                     )}
                 </div>
-
                 {user && (
                     <div className="profile-info">
                         <div className="profile-header">
@@ -212,7 +210,6 @@ const UsersProfile = () => {
                                 <span>, {calculateAge(user.birthdate)} ans</span>
                             </h1>
                         </div>
-
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
                         {user.bio && <p>{user.bio}</p>}
@@ -232,7 +229,6 @@ const UsersProfile = () => {
                                 <p>No interest available</p>
                             )}
                         </div>
-                        
                         {isMatched && (
                             <div className="match-actions">
                                 <button 
@@ -247,7 +243,6 @@ const UsersProfile = () => {
                     </div>
                 )}
             </div>
-            
             {/* Confirmation Popup for Delete Match */}
             <ConfirmationPopup 
                 isOpen={showDeleteConfirmation}
@@ -259,7 +254,6 @@ const UsersProfile = () => {
                 cancelText="Cancel"
                 isLoading={deletingMatch}
             />
-            
             {/* Success Popup */}
             <ConfirmationPopup 
                 isOpen={deleteSuccess}
@@ -271,7 +265,6 @@ const UsersProfile = () => {
                 cancelText=""
                 isLoading={false}
             />
-            
             <BottomNavBar />
         </div>
     );

@@ -90,6 +90,18 @@ const Chat = ({ conversationId, otherUser }) => {
         
         console.log(`Joining conversation room: ${conversationId}`);
         socket.emit('join', { conversation_id: conversationId });
+        
+        // Also emit join_chat event for tracking active conversations
+        socket.emit('join_chat', { conversation_id: conversationId });
+        
+        // Mark all message notifications from this conversation as read
+        try {
+            axios.post(`/api/user/notifications/read/type/message`);
+            console.log(`Marked all message notifications as read for conversation ${conversationId}`);
+        } catch (error) {
+            console.error(`Error marking message notifications as read:`, error);
+        }
+        
         hasJoined = true;
 
         // Listen for new messages
@@ -179,6 +191,9 @@ const Chat = ({ conversationId, otherUser }) => {
             if (hasJoined) {
                 console.log(`Leaving conversation room: ${conversationId}`);
                 socket.emit('leave_conversation', { conversation_id: conversationId });
+                
+                // Also emit leave_chat event for tracking active conversations
+                socket.emit('leave_chat', { conversation_id: conversationId });
             }
         };
     }, [socket, conversationId, me?.id]);

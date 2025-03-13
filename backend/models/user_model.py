@@ -3,6 +3,7 @@ from config.database import db_config
 from flask import jsonify
 import logging
 import json
+import datetime
 
 class UserModel:
     @staticmethod
@@ -504,3 +505,8 @@ class UserModel:
                 cursor.close()
             if 'connection' in locals() and connection:
                 connection.close()
+
+    @staticmethod
+    def get_current_timestamp():
+        """Return the current timestamp in ISO format"""
+        return datetime.datetime.now().isoformat()
