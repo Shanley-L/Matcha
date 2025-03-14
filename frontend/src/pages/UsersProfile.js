@@ -64,7 +64,6 @@ const UsersProfile = () => {
             try {
                 const response = await axios.get(`/api/user/${userId}/profile`);
                 setUser(response.data);
-<<<<<<< HEAD
                 
                 // Check if this user has liked the current user
                 const likedResponse = await axios.get(`/api/user/check-liked-me/${userId}`);
@@ -74,9 +73,7 @@ const UsersProfile = () => {
                 const matchesResponse = await axios.get('/api/user/getmatches');
                 const isUserMatched = matchesResponse.data.some(match => match.id === parseInt(userId));
                 setIsMatched(isUserMatched);
-=======
                 setIsConnected(response.data.is_connected);
->>>>>>> origin/lastconnexion
             } catch (error) {
                 console.error('Error loading user profile:', error);
                 navigate('/viewers');
@@ -332,8 +329,6 @@ const UsersProfile = () => {
                                 )}
                             </div>
                         </div>
-<<<<<<< HEAD
-=======
                         <div style={{ 
                                 display: 'flex', 
                                 alignItems: 'center', 
@@ -362,7 +357,6 @@ const UsersProfile = () => {
                                     )
                                 )}
                             </div>
->>>>>>> origin/lastconnexion
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
                         {user.bio && <p>{user.bio}</p>}

@@ -42,7 +42,7 @@ INSERT INTO users (username, email, password, firstname, gender, looking_for, bi
     ('Caroleplay', 'carol@example.com', 'hashed_password', 'Carol', 'female', 'male', 'Vétérinaire voyageuse.', 'Vétérinaire', '1993-12-05', 'United Kingdom', 'Paris', 'Champs-Élysées', '["animals", "nature_plant", "travel_places"]', false, '["/init/carol.jpeg"]', 'love', false, '2025-03-01 19:58:20'),
     ('Nini', 'annie@example.com', 'hashed_password', 'Annie', 'female', 'male', 'Professeure polyglotte.', 'Professeure', '1990-10-14', 'Canada', 'Paris', 'Pigalle', '["language", "travel_places", "people_society"]', false, '["/init/annie.jpeg"]', 'friends', false, '2025-02-19 23:14:20');
 
-INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, town, neighbourhood, interests, is_first_login, is_email_verified, photos, match_type) VALUES
+INSERT INTO users (username, email, password, firstname, gender, looking_for, bio, job, birthdate, country, city, suburb, interests, is_first_login, is_email_verified, photos, match_type) VALUES
     ('Admin', 'admin@admin.fr', 'scrypt:32768:8:1$S7D1jwJTSrom60Gb$5473cca544a5ab067c548a52c25fbf161e72815bf036389cb786933b8d0e0099f92d19abcfa230ac09b33e53e97d5543b49968fd0f762e3c6c534500a71a06a7', 'Admin', 'male', 'other', 'ADMIN, polyglotte. J''adore admin et admin.', 'Admin', '1990-10-14', 'France', 'Paris', 'CLichy', '["language", "travel_places", "people_society"]', false, true, '["/init/admin.png"]', 'friends');
 
 CREATE TABLE IF NOT EXISTS user_interactions (
