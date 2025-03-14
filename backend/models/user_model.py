@@ -499,6 +499,21 @@ class UserModel:
             
         except mysql.connector.Error as err:
             logging.error(f"Database error in delete_match: {err}")
+    def block_user(user_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+
+            query = """
+                UPDATE users
+                SET is_blocked_by = JSON_ARRAY_APPEND(COALESCE(is_blocked_by, '[]'),'$',%s)
+                WHERE id = %s
+            """     
+            cursor.execute(query, (user_id, target_id))
+            connection.commit()
+            return True 
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in block_user: {err}")
             return False
         finally:
             if 'cursor' in locals() and cursor:
@@ -510,3 +525,124 @@ class UserModel:
     def get_current_timestamp():
         """Return the current timestamp in ISO format"""
         return datetime.datetime.now().isoformat()
+    def is_user_blocked(user_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+
+            query = """
+                SELECT JSON_CONTAINS(is_blocked_by, %s, '$')
+                FROM users
+                WHERE id = %s;
+            """
+            cursor.execute(query, (user_id, target_id))
+            result = cursor.fetchone()
+            print("result:", result)
+
+            return result and result[0] == 1
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in is_user_blocked: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+
+    @staticmethod
+    def undo_block(user_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                UPDATE users
+                SET is_blocked_by = JSON_REMOVE(
+                    is_blocked_by, 
+                    JSON_UNQUOTE(JSON_SEARCH(is_blocked_by, 'one', %s))
+                )
+                WHERE id = %s
+            """
+            cursor.execute(query, (user_id, target_id))
+            connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in undo_block: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def report_user(user_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                UPDATE users
+                SET is_fake_account = JSON_ARRAY_APPEND(COALESCE(is_fake_account, '[]'),'$',%s)
+                WHERE id = %s 
+            """
+            cursor.execute(query, (user_id, target_id))
+            connection.commit()
+            return True 
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in report_user: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def is_user_reported(user_id, target_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+
+            query = """
+                SELECT JSON_CONTAINS(is_fake_account, %s, '$')
+                FROM users
+                WHERE id = %s;
+            """
+            cursor.execute(query, (user_id, target_id))
+            result = cursor.fetchone()
+            print("result:", result)
+
+            return result and result[0] == 1
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in is_user_reported: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def undo_report(user_id, target_id):
+        try:        
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                UPDATE users
+                SET is_fake_account = JSON_REMOVE(
+                    is_fake_account, 
+                    JSON_UNQUOTE(JSON_SEARCH(is_fake_account, 'one', %s))
+                )
+                WHERE id = %s
+            """
+            cursor.execute(query, (user_id, target_id))
+            connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in undo_report: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()

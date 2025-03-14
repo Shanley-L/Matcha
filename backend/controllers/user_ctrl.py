@@ -404,7 +404,6 @@ class UserController:
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized by session"}), 401
 
-        # Vérifier que l'utilisateur existe
         user = UserModel.get_by_id(target_user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
@@ -554,5 +553,64 @@ class UserController:
             logging.error(f"Error marking notification as read: {str(e)}")
             return jsonify({
                 "error": "Failed to mark notification as read",
+                "details": str(e)
+            }), 400
+    def block_user(target_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        user_id = session['user_id']
+
+        try:
+            is_already_blocked = UserModel.is_user_blocked(user_id, target_id)
+
+            if is_already_blocked:
+                success = UserModel.undo_block(user_id, target_id)
+                message = "unblocked"
+            else:
+                success = UserModel.block_user(user_id, target_id)
+                message = "blocked"
+
+            if success:
+                return jsonify({"message": message}), 200
+            else:
+                return jsonify({"message": "Failed to update block status"}), 400
+
+        except Exception as e:
+            logging.error(f"Error updating block status: {str(e)}")
+            return jsonify({
+                "error": "Failed to update block status",
+                "details": str(e)
+            }), 400
+
+
+    @staticmethod   
+    def report_user(target_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        user_id = session['user_id']
+
+        try:
+            is_already_reported = UserModel.is_user_reported(user_id, target_id)
+
+            if is_already_reported:
+                print("is_already_reported :", is_already_reported)
+                success = UserModel.undo_report(user_id, target_id)
+                message = "unreported"
+            else:
+                print("else")
+                success = UserModel.report_user(user_id, target_id)
+                message = "reported"
+
+            if success:
+                return jsonify({"message": message}), 200
+            else:
+                return jsonify({"message": "Failed to update report status"}), 400
+
+        except Exception as e:
+            logging.error(f"Error updating report status: {str(e)}")
+            return jsonify({
+                "error": "Failed to update report status",
                 "details": str(e)
             }), 400

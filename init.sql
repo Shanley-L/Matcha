@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
     interests JSON,
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,
+    is_fake_account JSON,
+    is_blocked_by JSON,
     photos JSON,
     viewers JSON,
     match_score INT DEFAULT 0,
