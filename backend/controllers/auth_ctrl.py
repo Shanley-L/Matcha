@@ -32,6 +32,7 @@ class AuthController:
         user = UserModel.get_by_email(email)
         if user and check_password_hash(user['password'], password):
             session['user_id'] = user['id']
+            UserModel.update_user_connection(user['id'])
             return jsonify({"message": "Login successful", "user": user}), 200
         return jsonify({"message": "Invalid credentials"}), 401
 
@@ -84,6 +85,7 @@ class AuthController:
 
     @staticmethod
     def logout():
+        UserModel.update_user_latest_connection(session['user_id'])
         session.clear()
         logging.error("Logout successful")
         return jsonify({"message": "Logout successful!"}), 200

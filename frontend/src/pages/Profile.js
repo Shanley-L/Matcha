@@ -11,6 +11,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [isConnected, setIsConnected] = useState(false);
 
     // Available interests for selection
     const availableInterests = [
@@ -52,6 +53,7 @@ const Profile = () => {
             try {
                 const response = await axios.get('/api/user/profile');
                 setUser(response.data);
+                setIsConnected(response.data.is_connected);
             } catch (error) {
                 console.error('Error loading profile:', error);
             } finally {
@@ -60,6 +62,8 @@ const Profile = () => {
         };
         loadProfile();
     }, []);
+
+    console.log(user);
 
     const nextPhoto = () => {
         if (user?.photos?.length) {
@@ -135,6 +139,34 @@ const Profile = () => {
                             </h1>
                             <i className="fa-solid fa-pen-to-square" onClick={handleEditClick} style={{ cursor: 'pointer' }}></i>
                         </div>
+                        <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '6px',
+                                marginTop: '4px',
+                                fontSize: '0.9rem',
+                                color: isConnected ? '#28a745' : '#666'
+                            }}>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: isConnected ? '#28a745' : '#666',
+                                    marginRight: '4px'
+                                }}></div>
+                                {isConnected ? (
+                                    'Online'
+                                ) : (
+                                    user.latest_connection && (
+                                        `Last seen ${new Date(user.latest_connection).toLocaleString('fr-FR', {
+                                            day: 'numeric',
+                                            month: 'short',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}`
+                                    )
+                                )}
+                            </div>
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
                         {<p>Actually in : {user.city}, {user.suburb}</p>}

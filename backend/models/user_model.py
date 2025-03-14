@@ -13,7 +13,7 @@ class UserModel:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
             birthdate, country, gender, looking_for, interests, photos, match_type,\
-            job, bio, city, suburb, created_at, viewers FROM users WHERE id = %s", (user_id,))
+            job, bio, city, suburb, created_at, is_connected, latest_connection, viewers FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
                 if user.get('interests') and isinstance(user['interests'], bytes):
@@ -30,6 +30,10 @@ class UserModel:
                     user['city'] = user['city']
                 if user.get('suburb'):
                     user['suburb'] = user['suburb']
+                if user.get('is_connected'):
+                    user['is_connected'] = user['is_connected']
+                if user.get('latest_connection'):
+                    user['latest_connection'] = user['latest_connection'].isoformat() if user['latest_connection'] else None
             return user
         except mysql.connector.Error as err:
             logging.error(f"Database error in get_by_id: {err}")
@@ -640,6 +644,51 @@ class UserModel:
             return True
         except mysql.connector.Error as err:
             logging.error(f"Database error in undo_report: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def update_user_connection(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                UPDATE users
+                SET is_connected = 1
+                WHERE id = %s
+            """
+            cursor.execute(query, (user_id,))
+            connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in update_user_connection: {err}")
+            return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def update_user_latest_connection(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            query = """
+                UPDATE users
+                SET latest_connection = CURRENT_TIMESTAMP,
+                is_connected = 0
+                WHERE id = %s
+            """
+            cursor.execute(query, (user_id,))
+            connection.commit()
+            return True
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in update_user_latest_connection: {err}")
             return False
         finally:
             if 'cursor' in locals() and cursor:
