@@ -19,8 +19,8 @@ export const UserProvider = ({ children }) => {
         photos: [],
         matchType: '',
         is_first_login: 0,
-        town: '',
-        neighbourhood: ''
+        city: '',
+        suburb: ''
     });
 
     return (
