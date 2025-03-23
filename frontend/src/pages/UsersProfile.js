@@ -79,6 +79,19 @@ const UsersProfile = () => {
                 // Get fame rate
                 const fameResponse = await axios.get(`/api/user/fame-rate/${userId}`);
                 setFameRate(fameResponse.data);
+                
+                // Check if the user is blocked or reported
+                try {
+                    const statusResponse = await axios.get(`/api/user/${userId}/status`);
+                    console.log('User status response:', statusResponse.data);
+                    setIsBlocked(statusResponse.data.isBlocked);
+                    setIsReported(statusResponse.data.isReported);
+                } catch (statusError) {
+                    console.warn('Could not fetch user status, using defaults:', statusError);
+                    // Default to not blocked/reported if endpoint fails
+                    setIsBlocked(false);
+                    setIsReported(false);
+                }
             } catch (error) {
                 console.error('Error loading user profile:', error);
                 navigate('/viewers');
@@ -104,32 +117,26 @@ const UsersProfile = () => {
         };
     }, []);
 
-    useEffect(() => {
-        const checkUserStatus = async () => {
-            try {
-                const response = await axios.get(`/api/user/${userId}/status`);
-                setIsBlocked(response.data.isBlocked);
-                setIsReported(response.data.isReported);
-            } catch (error) {
-                console.error('Error checking user status:', error);
-            }
-        };
-        checkUserStatus();
-    }, [userId]);
-    
     const handleToggleBlock = async () => {
         try {
+            // Since we're toggling, flip the current state if we have to handle failures
+            const newBlockedState = !isBlocked;
+            
             const response = await axios.post('/api/user/block', { target_id: userId });
-    
+            
             if (response.data.message === 'blocked') {
                 setIsBlocked(true);
-                navigate('/likes');
             } else if (response.data.message === 'unblocked') {
                 setIsBlocked(false);
-                navigate('/likes');
+            } else {
+                // If the response doesn't have the expected format,
+                // still update the UI based on the toggle action
+                setIsBlocked(newBlockedState);
             }
         } catch (error) {
             console.error('Error toggling block status:', error);
+            // In case of error, don't change the UI state
+            // Optionally, you could show an error message to the user here
         }
         setShowOptionsMenu(false);
     };
@@ -280,6 +287,19 @@ const UsersProfile = () => {
                             <h1>
                                 {user.username}, {user.firstname}
                                 <span>, {calculateAge(user.birthdate)} ans</span>
+                                {isBlocked && (
+                                    <span style={{ 
+                                        fontSize: '0.7rem', 
+                                        backgroundColor: '#dc3545', 
+                                        color: 'white',
+                                        padding: '2px 6px',
+                                        borderRadius: '10px',
+                                        marginLeft: '10px',
+                                        verticalAlign: 'middle'
+                                    }}>
+                                        Blocked
+                                    </span>
+                                )}
                             </h1>
                             <div className="options-container" ref={optionsRef} style={{ position: 'absolute', right: '0', top: '0' }}>
                                 <i 

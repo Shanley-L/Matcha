@@ -655,3 +655,28 @@ class UserController:
                 "error": "Failed to get blocked users",
                 "details": str(e)
             }), 400
+
+    @staticmethod
+    def get_user_status(user_id):
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        current_user_id = session['user_id']
+        
+        try:
+            # Check if the target user is blocked by the current user
+            is_blocked = UserModel.is_user_blocked(current_user_id, user_id)
+            
+            # Check if the target user is reported by the current user
+            is_reported = UserModel.is_user_reported(current_user_id, user_id)
+            
+            return jsonify({
+                "isBlocked": is_blocked,
+                "isReported": is_reported
+            }), 200
+        except Exception as e:
+            logging.error(f"Error getting user status: {str(e)}")
+            return jsonify({
+                "error": "Failed to get user status",
+                "details": str(e)
+            }), 400

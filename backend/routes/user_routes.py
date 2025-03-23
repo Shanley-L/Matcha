@@ -114,3 +114,8 @@ def get_user_fame_rate(user_id):
 def get_blocked_users():
     return UserController.get_blocked_users()
 
+@user_bp.route('/<int:user_id>/status', methods=['GET'])
+@email_verified_required
+def get_user_status(user_id):
+    return UserController.get_user_status(user_id)
+
