@@ -12,7 +12,6 @@ const Home = () => {
     const [minAge, setMinAge] = useState(18);
     const [maxAge, setMaxAge] = useState(50);
     const [selectedGender, setSelectedGender] = useState('female');
-    const [selectedLocation, setSelectedLocation] = useState('world');
     const [potentialMatches, setPotentialMatches] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -31,9 +30,6 @@ const Home = () => {
         setMaxAge(Math.max(value, minAge + 1));
     };
 
-    const handleLocationSelect = async (location) => {
-        setSelectedLocation(location);
-    };
 
     const handleGenderSelect = async (gender) => {
         try {
