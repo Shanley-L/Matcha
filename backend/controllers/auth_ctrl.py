@@ -73,7 +73,6 @@ class AuthController:
                     recipients=[user_email],
                     html=html)
         try:
-            logging.info("Sending confirmation email")
             return mail.send(msg)
         except Exception as e:
             print(f"Error sending email: {e}")

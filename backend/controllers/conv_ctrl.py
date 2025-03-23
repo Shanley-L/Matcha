@@ -93,7 +93,6 @@ class ConversationController:
                 
                 # Use socketio instance to emit the message to the conversation room
                 room = str(conversation_id)
-                logging.info(f"Sending message to conversation room {room}")
                 socketio.emit('new_message', socket_message, room=room)
                 
                 # Find the other user in the conversation to send them a direct notification
@@ -119,7 +118,6 @@ class ConversationController:
                         else:
                             # Send notification directly to recipient's room
                             recipient_room = f"user_{recipient_id}"
-                            logging.info(f"Sending message notification to user room {recipient_room}")
                             socketio.emit('new_notification', {
                                 'type': 'message',
                                 'sender': {
@@ -135,7 +133,6 @@ class ConversationController:
                             # Also try sending directly to the user's socket ID if they're active
                             if recipient_id in active_users:
                                 sid = active_users[recipient_id]
-                                logging.info(f"Also sending message notification directly to user's SID {sid}")
                                 socketio.emit('new_notification', {
                                     'type': 'message',
                                     'sender': {
@@ -149,7 +146,6 @@ class ConversationController:
                                 }, room=sid)
                             
                             # Also broadcast the notification to all clients as a fallback
-                            logging.info(f"Broadcasting message notification as fallback")
                             socketio.emit('broadcast_notification', {
                                 'type': 'message',
                                 'sender': {

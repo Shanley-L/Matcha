@@ -21,15 +21,11 @@ active_conversations = {}
 def handle_connect():
     try:
         user_id = request.args.get('user_id')
-        logging.info(f'Socket connect attempt with user_id: {user_id}')
-        
         if user_id:
             active_users[user_id] = request.sid
             # Join user to their personal room for direct notifications
             room_name = f"user_{user_id}"
             join_room(room_name)
-            logging.info(f'User {user_id} connected with sid {request.sid} and joined room {room_name}')
-            logging.info(f'Active users: {active_users}')
             emit('user_connected', {'user_id': user_id}, broadcast=True)
         else:
             logging.warning('Connection attempt without user_id')
@@ -52,7 +48,6 @@ def handle_disconnect():
             if user_id in active_conversations:
                 del active_conversations[user_id]
             emit('user_disconnected', {'user_id': user_id}, broadcast=True)
-            logging.info(f'User {user_id} disconnected')
     except Exception as e:
         logging.error(f'Error in handle_disconnect: {str(e)}')
 
@@ -69,10 +64,7 @@ def handle_join_chat(data):
         # Store that this user is active in this conversation
         if user_id:
             active_conversations[user_id] = conversation_id
-            logging.info(f'User {user_id} is now active in conversation {conversation_id}')
-            
         join_room(conversation_id)
-        logging.info(f'User joined chat {conversation_id}')
     except Exception as e:
         logging.error(f'Error in handle_join_chat: {str(e)}')
 
@@ -85,10 +77,7 @@ def handle_leave_chat(data):
         # Remove user from active conversations
         if user_id and user_id in active_conversations:
             del active_conversations[user_id]
-            logging.info(f'User {user_id} is no longer active in conversation {conversation_id}')
-            
         leave_room(conversation_id)
-        logging.info(f'User left chat {conversation_id}')
     except Exception as e:
         logging.error(f'Error in handle_leave_chat: {str(e)}')
 
@@ -102,7 +91,6 @@ def handle_message(data):
         'sent_at': data.get('sent_at')
     }
     emit('new_message', message, room=conversation_id)
-    logging.info(f'Message sent in conversation {conversation_id}')
 
 @socketio.on('typing')
 def handle_typing(data):
@@ -113,21 +101,16 @@ def handle_typing(data):
 @socketio.on('notification')
 def handle_notification(data):
     target_user_id = str(data['target_user_id'])
-    logging.info(f'Notification request for user {target_user_id}. Data: {data}')
     
     # Try both methods of sending notifications
     # 1. Using the socket ID from active_users
     if target_user_id in active_users:
         sid = active_users[target_user_id]
-        logging.info(f'Sending notification to user {target_user_id} with SID {sid}')
         emit('new_notification', data, room=sid)
-        logging.info(f'Notification sent to user {target_user_id} via SID')
     
     # 2. Using the user's room name
     room_name = f"user_{target_user_id}"
-    logging.info(f'Also sending notification to room {room_name}')
     emit('new_notification', data, room=room_name)
-    logging.info(f'Notification sent to room {room_name}')
 
 @socketio.on('join_room')
 def handle_join_room(data):
@@ -135,7 +118,6 @@ def handle_join_room(data):
         room = data.get('room')
         if room:
             join_room(room)
-            logging.info(f'User with SID {request.sid} explicitly joined room: {room}')
         else:
             logging.warning('Join room attempt without room name')
     except Exception as e:
