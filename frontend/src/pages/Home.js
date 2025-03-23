@@ -5,7 +5,7 @@ import BottomNavBar from '../components/BottomNavBar';
 import PageHeader from '../components/PageHeader';
 import '../styles/pages/shared.css';
 import '../styles/pages/Home.css';
-import { IoClose, IoHeart, IoStar } from 'react-icons/io5';
+import { IoClose, IoHeart } from 'react-icons/io5';
 
 const Home = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -143,13 +143,6 @@ const Home = () => {
                         disabled={!potentialMatches[currentIndex]}
                     >
                         <IoHeart />
-                    </button>
-                    <button 
-                        className="swipe-button star"
-                        onClick={() => console.log('Super like')}
-                        disabled={!potentialMatches[currentIndex]}
-                    >
-                        <IoStar />
                     </button>
                 </div>
             </div>

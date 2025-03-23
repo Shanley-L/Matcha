@@ -409,7 +409,7 @@ class UserModel:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
             cursor.execute("""
-                SELECT gender, looking_for, interests 
+                SELECT gender, looking_for, interests, is_blocked_by
                 FROM users 
                 WHERE id = %s
             """, (current_user_id,))
@@ -417,6 +417,18 @@ class UserModel:
             if not current_user:
                 logging.error("Current user not found")
                 return []
+            current_user_blocked_by = []
+            if current_user.get('is_blocked_by'):
+                if isinstance(current_user['is_blocked_by'], bytes):
+                    current_user_blocked_by = json.loads(current_user['is_blocked_by'].decode())
+                elif isinstance(current_user['is_blocked_by'], str):
+                    current_user_blocked_by = json.loads(current_user['is_blocked_by'])
+                else:
+                    current_user_blocked_by = current_user['is_blocked_by']
+            blocked_condition = ""
+            if current_user_blocked_by:
+                placeholders = ', '.join(['%s'] * len(current_user_blocked_by))
+                blocked_condition = f"AND id NOT IN ({placeholders})"
             current_user_interests = []
             if current_user.get('interests'):
                 if isinstance(current_user['interests'], bytes):
@@ -436,6 +448,7 @@ class UserModel:
                     AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) >= %s 
                     AND TIMESTAMPDIFF(YEAR, birthdate, CURDATE()) <= %s
                 """
+
             query = f"""
                 SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests
                 FROM users
@@ -448,12 +461,15 @@ class UserModel:
                     WHERE user_id = %s
                 )
                 AND (is_blocked_by IS NULL OR NOT JSON_CONTAINS(is_blocked_by, %s, '$'))
+                {blocked_condition}
             """
             params = [current_user_id]  # For the id != %s condition
             if min_age is not None and max_age is not None:
                 params.extend([min_age, max_age])
             params.append(current_user_id)  # For the WHERE user_id = %s in subquery
             params.append(json.dumps(current_user_id))  # For the JSON_CONTAINS function
+            if current_user_blocked_by:
+                params.extend(current_user_blocked_by)
             
             cursor.execute(query, tuple(params))
             matches = cursor.fetchall()
@@ -535,7 +551,6 @@ class UserModel:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
             
-            # First, delete the conversation between the users
             conv_query = """
                 DELETE FROM conversations 
                 WHERE (user1_id = %s AND user2_id = %s) 
@@ -543,7 +558,6 @@ class UserModel:
             """
             cursor.execute(conv_query, (user_id, target_user_id, target_user_id, user_id))
             
-            # Then, delete the interactions between the users
             interaction_query = """
                 DELETE FROM user_interactions 
                 WHERE (user_id = %s AND target_user_id = %s) 
