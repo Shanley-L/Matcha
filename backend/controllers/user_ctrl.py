@@ -570,6 +570,11 @@ class UserController:
                 message = "unblocked"
             else:
                 success = UserModel.block_user(user_id, target_id)
+                logging.info(f"Success: {success}")
+                if success:
+                    logging.info("Deleting match")
+                    success = UserModel.delete_match(user_id, target_id)
+                    logging.info(f"Success: {success}")
                 message = "blocked"
 
             if success:
@@ -633,5 +638,20 @@ class UserController:
             logging.error(f"Error getting fame rate: {str(e)}")
             return jsonify({
                 "error": "Failed to get fame rate",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
+    def get_blocked_users():
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+        
+        try:
+            blocked_users = UserModel.get_blocked_users(session['user_id'])
+            return jsonify(blocked_users), 200
+        except Exception as e:
+            logging.error(f"Error getting blocked users: {str(e)}")
+            return jsonify({
+                "error": "Failed to get blocked users",
                 "details": str(e)
             }), 400

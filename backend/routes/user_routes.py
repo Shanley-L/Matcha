@@ -109,3 +109,8 @@ def get_user_fame_rate(user_id):
     """Get fame rate for a specific user"""
     return UserController.get_user_fame_rate(user_id)
 
+@user_bp.route('/blocked', methods=['GET'])
+@email_verified_required
+def get_blocked_users():
+    return UserController.get_blocked_users()
+

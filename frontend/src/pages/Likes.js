@@ -9,6 +9,7 @@ import '../styles/pages/Likes.css';
 const Likes = () => {
     const [matches, setMatches] = useState([]);
     const [likes, setLikes] = useState([]);
+    const [blockedUsers, setBlockedUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -19,6 +20,9 @@ const Likes = () => {
 
             const likesResponse = await axios.get('/api/user/likes');
             setLikes(likesResponse.data);
+            
+            const blockedResponse = await axios.get('/api/user/blocked');
+            setBlockedUsers(blockedResponse.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -107,6 +111,11 @@ const Likes = () => {
                     <div className="likes-section">
                         <h2>Likes</h2>
                         {renderUserGrid(likes, 'No likes yet')}
+                    </div>
+                    
+                    <div className="likes-section">
+                        <h2>Blocked Users</h2>
+                        {renderUserGrid(blockedUsers, 'No blocked users')}
                     </div>
                 </div>
             </div>

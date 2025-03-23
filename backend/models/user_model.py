@@ -556,6 +556,9 @@ class UserModel:
             
         except mysql.connector.Error as err:
             logging.error(f"Database error in delete_match: {err}")
+            return False
+
+    @staticmethod
     def block_user(user_id, target_id):
         try:
             connection = mysql.connector.connect(**db_config)
@@ -582,6 +585,8 @@ class UserModel:
     def get_current_timestamp():
         """Return the current timestamp in ISO format"""
         return datetime.datetime.now().isoformat()
+
+    @staticmethod
     def is_user_blocked(user_id, target_id):
         try:
             connection = mysql.connector.connect(**db_config)
@@ -743,6 +748,38 @@ class UserModel:
         except mysql.connector.Error as err:
             logging.error(f"Database error in update_user_latest_connection: {err}")
             return False
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
+    def get_blocked_users(user_id):
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor(dictionary=True)
+
+            # Query to find users that have the current user's ID in their is_blocked_by JSON array
+            query = """
+                SELECT id, username, firstname, birthdate, job, bio, photos, country, gender
+                FROM users
+                WHERE JSON_CONTAINS(is_blocked_by, %s, '$')
+                ORDER BY firstname
+            """
+            
+            cursor.execute(query, (json.dumps(user_id),))
+            blocked_users = cursor.fetchall()
+            
+            for user in blocked_users:
+                if user.get('photos') and isinstance(user['photos'], bytes):
+                    user['photos'] = json.loads(user['photos'].decode())
+
+            return blocked_users
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_blocked_users: {err}")
+            return []
         finally:
             if 'cursor' in locals() and cursor:
                 cursor.close()
