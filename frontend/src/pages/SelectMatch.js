@@ -54,17 +54,12 @@ const SelectMatch = () => {
                     }
                 }
             });
-            console.log('FormData content:');
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
             try {
                 const response = await axios.put('/api/user/update', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     }
                 });
-                console.log('Données envoyées:', response.data);
                 navigate('/home');
             } catch (error) {
                 console.error('Erreur lors de l\'envoi des données:', error);

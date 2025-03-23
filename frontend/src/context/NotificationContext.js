@@ -82,8 +82,6 @@ export const NotificationProvider = ({ children }) => {
 
   // Set active conversation
   const setActiveConversationId = useCallback((conversationId) => {
-    console.log('NotificationContext: Setting active conversation:', conversationId);
-    
     // Only update if the value is actually changing
     setActiveConversation(prevConversation => {
       if (prevConversation === conversationId) return prevConversation;
@@ -91,10 +89,8 @@ export const NotificationProvider = ({ children }) => {
       // Tell the backend about the active conversation change
       if (socket) {
         if (conversationId) {
-          console.log(`Telling backend user is now active in conversation: ${conversationId}`);
           socket.emit('join_chat', { conversation_id: conversationId });
         } else if (prevConversation) {
-          console.log(`Telling backend user is no longer active in conversation: ${prevConversation}`);
           socket.emit('leave_chat', { conversation_id: prevConversation });
         }
       }
@@ -103,7 +99,6 @@ export const NotificationProvider = ({ children }) => {
       if (conversationId) {
         try {
           axios.post(`/api/user/notifications/read/type/message`);
-          console.log(`Marked all message notifications as read for conversation ${conversationId}`);
           
           setNotifications(prev => {
             const updated = prev.map(notification => {
@@ -131,15 +126,8 @@ export const NotificationProvider = ({ children }) => {
   // Listen for socket notifications
   useEffect(() => {
     if (!socket || !me) {
-      console.log('NotificationContext: Socket or user not available', { 
-        socketExists: !!socket, 
-        userExists: !!me,
-        userId: me?.id 
-      });
       return;
     }
-
-    console.log('NotificationContext: Setting up notification listeners for user', me.id);
 
     // Function to generate notification message based on type
     const getNotificationMessage = (data) => {
@@ -159,8 +147,6 @@ export const NotificationProvider = ({ children }) => {
 
     // Handle all types of notifications
     const handleNotification = (data) => {
-      console.log('Notification received:', data);
-      
       // Skip message notifications for the active conversation
       if (
         data.type === 'message' && 
@@ -168,13 +154,10 @@ export const NotificationProvider = ({ children }) => {
         (data.conversation_id === activeConversation || 
          data.conversation_id === activeConversation.toString())
       ) {
-        console.log('NotificationContext: Skipping notification for active conversation:', activeConversation);
         return;
       }
-      
       // Generate a unique ID if not provided
       const notificationId = data.id || `${data.type}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      
       // Create notification object
       const notification = {
         id: notificationId,
@@ -184,43 +167,28 @@ export const NotificationProvider = ({ children }) => {
         data: data,
         read: false
       };
-      
-      console.log('Adding notification to state:', notification);
       addNotification(notification);
     };
 
     // Set up socket listeners
     socket.on('new_notification', handleNotification);
-    console.log('NotificationContext: Listening for "new_notification" events');
-    
     // Also listen for broadcast notifications (fallback)
     socket.on('broadcast_notification', (data) => {
-      console.log('NotificationContext: Broadcast notification received:', data);
-      
       // Only process if this notification is for the current user
       if (data.target_user_id && data.target_user_id === me.id) {
-        console.log('NotificationContext: Processing broadcast notification for current user');
         handleNotification(data);
       } else {
-        console.log('NotificationContext: Ignoring broadcast notification for other user');
+        
       }
     });
-    
-    // We no longer need to listen for new_message events here since the backend
-    // will send proper notifications through new_notification events
-    // The Chat component will handle the actual message display
-    
     // Listen for notification read events
     socket.on('notification_read', (data) => {
-      console.log('NotificationContext: Notification read event received:', data);
       if (data.notification_id) {
         markAsRead(data.notification_id);
       }
     });
-    
     // Listen for notification type read events
     socket.on('notification_type_read', (data) => {
-      console.log('NotificationContext: Notification type read event received:', data);
       if (data.notification_type) {
         setNotifications(prev => {
           const updated = prev.map(notification => {
@@ -234,16 +202,12 @@ export const NotificationProvider = ({ children }) => {
         });
       }
     });
-    
     // Listen for all notifications read events
     socket.on('all_notifications_read', () => {
-      console.log('NotificationContext: All notifications read event received');
       markAllAsRead();
     });
-
     // Clean up listeners on unmount
     return () => {
-      console.log('NotificationContext: Cleaning up socket listeners');
       socket.off('new_notification');
       socket.off('broadcast_notification');
       socket.off('notification_read');

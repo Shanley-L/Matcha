@@ -47,12 +47,6 @@ const UploadPhotos = () => {
                     }
                 }
             });
-
-            // Log des données envoyées
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-
             // Envoyer les données au backend
             const response = await axios.put('/api/user/update', formData, {
                 headers: {

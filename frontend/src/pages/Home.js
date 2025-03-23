@@ -68,10 +68,7 @@ const Home = () => {
     const handleSwipe = async (direction, userId) => {
         try {
             if (direction === 'right') {
-                const response = await axios.post(`/api/user/like/${userId}`);
-                if (response.data.is_match) {
-                    console.log('It\'s a match!');
-                }
+                await axios.post(`/api/user/like/${userId}`);
             } else {
                 await axios.post(`/api/user/dislike/${userId}`);
             }
@@ -98,7 +95,6 @@ const Home = () => {
                 const userResponse = await axios.get('/api/user/profile');
                 if (userResponse.data.looking_for) {
                     setSelectedGender(userResponse.data.looking_for);
-                    console.log("test"); 
                 }
                 await fetchPotentialMatches();
             } catch (error) {

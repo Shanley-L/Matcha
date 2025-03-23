@@ -11,12 +11,6 @@ const NotificationBell = () => {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Log notifications when they change
-  useEffect(() => {
-    console.log('NotificationBell: Current notifications:', notifications);
-    console.log('NotificationBell: Unread count:', unreadCount);
-  }, [notifications, unreadCount]);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -30,14 +24,11 @@ const NotificationBell = () => {
   }, []);
 
   const toggleDropdown = async () => {
-    console.log('NotificationBell: Toggling dropdown, current state:', isOpen);
     setIsOpen(!isOpen);
     if (!isOpen && unreadCount > 0) {
-      console.log('NotificationBell: Marking all notifications as read');
       markAllAsRead();
       try {
         await axios.post('/api/user/notifications/read');
-        console.log('NotificationBell: All notifications marked as read on server');
       } catch (error) {
         console.error('NotificationBell: Error marking all notifications as read:', error);
       }
@@ -45,32 +36,26 @@ const NotificationBell = () => {
   };
 
   const handleNotificationClick = async (notification) => {
-    console.log('NotificationBell: Notification clicked:', notification);
     markAsRead(notification.id);
     try {
       await axios.post(`/api/user/notifications/read/${notification.id}`);
-      console.log(`NotificationBell: Notification ${notification.id} marked as read on server`);
     } catch (error) {
       console.error(`NotificationBell: Error marking notification ${notification.id} as read:`, error);
     }
     switch (notification.type) {
       case 'like':
-        console.log('NotificationBell: Navigating to /likes');
         navigate('/likes');
         break;
       case 'match':
-        console.log('NotificationBell: Navigating to /chats');
         navigate('/chats');
         break;
       case 'message':
         navigate('/chats');
         break;
       case 'unmatch':
-        console.log('NotificationBell: Navigating to /matches');
         navigate('/likes');
         break;
       default:
-        console.log('NotificationBell: Navigating to / (default case)');
         navigate('/home');
     }
     setIsOpen(false);
@@ -114,7 +99,6 @@ const NotificationBell = () => {
                 // Call API to mark all notifications as read
                 try {
                   await axios.post('/api/user/notifications/read');
-                  console.log('NotificationBell: All notifications marked as read on server');
                 } catch (error) {
                   console.error('NotificationBell: Error marking all notifications as read:', error);
                 }

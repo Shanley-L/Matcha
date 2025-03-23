@@ -25,12 +25,7 @@ import { UserProvider } from './context/UserContext';
 import { NotificationProvider } from './context/NotificationContext';
 import UsersProfile from './pages/UsersProfile';
 
-// For debugging
-console.log('App.js loaded');
-
 const App = () => {
-  console.log('App component rendering');
-  
   return (
     <WhoAmIProvider>
       <UserProvider>

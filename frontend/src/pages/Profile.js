@@ -68,8 +68,6 @@ const Profile = () => {
         loadProfile();
     }, []);
 
-    console.log(user);
-
     const nextPhoto = () => {
         if (user?.photos?.length) {
             setCurrentPhotoIndex((prev) => (prev + 1) % user.photos.length);

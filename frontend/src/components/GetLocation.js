@@ -13,7 +13,6 @@ const GetLocation = () => {
             const preciseLocationData = await preciseLocation.json();
             
             if (preciseLocationData.address) {
-                console.log("PRECISE LOCATION :",preciseLocationData);
                 location.city = preciseLocationData.address.city;
                 location.suburb = preciseLocationData.address.suburb;
             } else {
@@ -35,7 +34,6 @@ const GetLocation = () => {
                     try {
                         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
                         const data = await response.json();
-                        console.log("NAVIGATOR :",data);
                         location.city = data.address.city;
                         location.suburb = data.address.suburb;
                     } catch (error) {

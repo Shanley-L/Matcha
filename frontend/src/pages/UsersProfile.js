@@ -79,11 +79,9 @@ const UsersProfile = () => {
                 // Get fame rate
                 const fameResponse = await axios.get(`/api/user/fame-rate/${userId}`);
                 setFameRate(fameResponse.data);
-                
                 // Check if the user is blocked or reported
                 try {
                     const statusResponse = await axios.get(`/api/user/${userId}/status`);
-                    console.log('User status response:', statusResponse.data);
                     setIsBlocked(statusResponse.data.isBlocked);
                     setIsReported(statusResponse.data.isReported);
                 } catch (statusError) {
@@ -101,9 +99,6 @@ const UsersProfile = () => {
         };
         loadUserProfile();
     }, [userId, navigate]);
-
-    console.log(user);
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (optionsRef.current && !optionsRef.current.contains(event.target)) {

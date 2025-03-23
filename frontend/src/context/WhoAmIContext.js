@@ -25,7 +25,6 @@ export const WhoAmIProvider = ({ children }) => {
     // Clean up socket connection
     const cleanupSocket = useCallback(() => {
         if (socketRef.current) {
-            console.log('Cleaning up socket connection');
             socketRef.current.close();
             setSocket(null);
             socketRef.current = null;
@@ -36,11 +35,7 @@ export const WhoAmIProvider = ({ children }) => {
     // Initialize socket connection
     const initializeSocket = useCallback(() => {
         if (!me || socketInitializedRef.current || !me.id) return;
-        
-        console.log('Initializing socket connection for user:', me.id);
-        console.log('Using socket URL:', socketConfig.url);
         socketInitializedRef.current = true;
-        
         const newSocket = io(socketConfig.url, {
             ...socketConfig.options,
             query: {
@@ -49,11 +44,7 @@ export const WhoAmIProvider = ({ children }) => {
         });
         
         newSocket.on('connect', () => {
-            console.log('Socket connected successfully');
-            console.log('Socket ID:', newSocket.id);
-            
             // Explicitly join the user's personal room for notifications
-            console.log(`Explicitly joining room: user_${me.id}`);
             newSocket.emit('join_room', { room: `user_${me.id}` });
         });
         
@@ -63,14 +54,13 @@ export const WhoAmIProvider = ({ children }) => {
         });
         
         newSocket.on('disconnect', () => {
-            console.log('Socket disconnected');
             socketInitializedRef.current = false;
         });
         
         // Debug event to check if we're receiving any events
-        newSocket.onAny((event, ...args) => {
-            console.log(`Socket event received: ${event}`, args);
-        });
+        // newSocket.onAny((event, ...args) => {
+        //     console.log(`Socket event received: ${event}`, args);
+        // });
         
         socketRef.current = newSocket;
         setSocket(newSocket);
@@ -82,11 +72,8 @@ export const WhoAmIProvider = ({ children }) => {
         
         try {
             setLoading(true);
-            console.log('Fetching user data...');
-            
             // Check if the user is authenticated
             const response = await axios.get('/api/auth/whoami');
-            console.log('User data fetched successfully');
             setMe(response.data);
             setError(null);
         } catch (err) {
@@ -95,7 +82,6 @@ export const WhoAmIProvider = ({ children }) => {
             
             // Handle 401 Unauthorized differently - this is expected when not logged in
             if (err.response?.status === 401) {
-                console.log('User not authenticated');
                 setError('Not authenticated');
             } else {
                 setError(err.message || 'Failed to fetch user data');
@@ -114,16 +100,13 @@ export const WhoAmIProvider = ({ children }) => {
         
         try {
             setLoading(true);
-            console.log('Refetching user data...');
             const response = await axios.get('/api/auth/whoami');
-            console.log('User data refetched successfully');
             setMe(response.data);
             setError(null);
         } catch (err) {
             console.error('Error refetching user data:', err.response?.status || err.message);
             
             if (err.response?.status === 401) {
-                console.log('User not authenticated');
                 setError('Not authenticated');
             } else {
                 setError(err.message || 'Failed to fetch user data');

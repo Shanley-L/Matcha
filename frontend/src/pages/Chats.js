@@ -18,15 +18,10 @@ const Chats = () => {
     const fetchConversations = useCallback(async () => {
         try {
             if (!me) {
-                console.log('User not authenticated, skipping fetch');
                 setLoading(false);
                 return;
             }
-            
-            console.log('User ID: ' + me.id);
-            console.log('Fetching conversations...');
             const response = await axios.get('/api/conv/list');
-            console.log('Conversations response:', response.data);
             setConversations(response.data);
         } catch (error) {
             console.error('Error fetching conversations:', error);

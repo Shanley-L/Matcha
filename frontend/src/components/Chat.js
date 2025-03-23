@@ -17,29 +17,16 @@ const Chat = ({ conversationId, otherUser }) => {
     const { socket, me } = useWhoAmI();
     const { setActiveConversation } = useNotifications();
 
-    // Debug function to log messages state
-    useEffect(() => {
-        console.log('Messages state updated:', messages.map(m => ({
-            id: m.id,
-            content: m.content.substring(0, 20) + (m.content.length > 20 ? '...' : ''),
-            sender_id: m.sender_id,
-            messageKey: m.messageKey
-        })));
-    }, [messages]);
-
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    // Set active conversation when component mounts
     useEffect(() => {
         if (conversationId) {
-            console.log('Chat: Setting active conversation:', conversationId);
             setActiveConversation(conversationId);
         }
         
         return () => {
-            console.log('Chat: Clearing active conversation');
             setActiveConversation(null);
         };
     }, [conversationId, setActiveConversation]);
@@ -53,7 +40,6 @@ const Chat = ({ conversationId, otherUser }) => {
                 processedMessageIdsRef.current = new Set();
                 
                 const response = await axios.get(`/api/conv/${conversationId}/messages`);
-                console.log('Fetched messages:', response.data);
                 
                 // Transform messages if needed to match our component's expected format
                 const formattedMessages = response.data.map(msg => ({
@@ -92,7 +78,6 @@ const Chat = ({ conversationId, otherUser }) => {
     // Socket event handlers
     useEffect(() => {
         if (!socket || !conversationId || !me?.id) {
-            console.log('Socket not available for chat or missing required data');
             return;
         }
         
@@ -103,13 +88,11 @@ const Chat = ({ conversationId, otherUser }) => {
         socket.off('new_message');
         socket.off('typing_status');
         
-        console.log(`Joining conversation room: ${conversationId}`);
         socket.emit('join', { conversation_id: conversationId });
         
         // Mark all message notifications from this conversation as read
         try {
             axios.post(`/api/user/notifications/read/type/message`);
-            console.log(`Marked all message notifications as read for conversation ${conversationId}`);
         } catch (error) {
             console.error(`Error marking message notifications as read:`, error);
         }
@@ -118,7 +101,6 @@ const Chat = ({ conversationId, otherUser }) => {
 
         // Listen for new messages
         const handleNewMessage = (data) => {
-            console.log('New message received via socket:', data);
             if (data.conversation_id === conversationId.toString()) {
                 // Format the message to match our component's expected format
                 const newMsg = {
@@ -129,20 +111,14 @@ const Chat = ({ conversationId, otherUser }) => {
                     messageKey: `socket-${data.message?.id || Math.random().toString(36).substr(2, 9)}`
                 };
                 
-                console.log('Formatted message:', newMsg);
-                console.log('Message ID:', newMsg.id);
-                console.log('Processed IDs:', Array.from(processedMessageIdsRef.current));
-                
                 // Skip if we've already processed this message ID
                 if (newMsg.id && processedMessageIdsRef.current.has(newMsg.id)) {
-                    console.log('Already processed message ID, skipping:', newMsg.id);
                     return;
                 }
                 
                 // Add to processed set if it has an ID
                 if (newMsg.id) {
                     processedMessageIdsRef.current.add(newMsg.id);
-                    console.log('Added message ID to processed set:', newMsg.id);
                 }
                 
                 // Add the message to our state
@@ -151,7 +127,6 @@ const Chat = ({ conversationId, otherUser }) => {
                     const isDuplicate = prev.some(msg => {
                         // Check by ID if available
                         if (newMsg.id && msg.id === newMsg.id) {
-                            console.log('Duplicate detected by ID:', newMsg.id);
                             return true;
                         }
                         // Check by content, sender and approximate time
@@ -162,7 +137,6 @@ const Chat = ({ conversationId, otherUser }) => {
                             const newMsgTime = new Date(newMsg.sent_at || new Date());
                             const timeDiff = Math.abs(msgTime - newMsgTime);
                             if (timeDiff < 1000) { // 10 seconds
-                                console.log('Duplicate detected by content and sender within 10s');
                                 return true;
                             }
                         }
@@ -171,11 +145,9 @@ const Chat = ({ conversationId, otherUser }) => {
                     });
                     
                     if (isDuplicate) {
-                        console.log('Message already exists, not adding duplicate');
                         return prev;
                     }
                     
-                    console.log('Adding new message to state');
                     const newMessages = [...prev, newMsg];
                     setTimeout(scrollToBottom, 100);
                     return newMessages;
@@ -185,25 +157,21 @@ const Chat = ({ conversationId, otherUser }) => {
         
         // Listen for typing status
         const handleTypingStatus = (data) => {
-            console.log('Typing status received:', data);
             if (data.conversation_id === conversationId.toString() && data.user_id !== me.id) {
                 setOtherUserTyping(data.is_typing);
             }
         };
 
         // Add event listeners
-        console.log('Setting up socket event listeners');
         socket.on('new_message', handleNewMessage);
         socket.on('typing_status', handleTypingStatus);
 
         return () => {
-            console.log(`Cleaning up socket event listeners for conversation: ${conversationId}`);
             socket.off('new_message', handleNewMessage);
             socket.off('typing_status', handleTypingStatus);
             
             // Only leave if we joined
             if (hasJoined) {
-                console.log(`Leaving conversation room: ${conversationId}`);
                 socket.emit('leave_conversation', { conversation_id: conversationId });
             }
         };
@@ -263,12 +231,10 @@ const Chat = ({ conversationId, otherUser }) => {
             const serverMessageId = response.data.id;
             if (serverMessageId) {
                 processedMessageIdsRef.current.add(serverMessageId);
-                console.log('Added message ID to processed set:', serverMessageId);
             }
             
             // We don't need to add the message to the UI here
             // The socket will receive the message and add it to the UI
-            console.log('Message sent successfully, waiting for socket update');
             
         } catch (error) {
             console.error('Error sending message:', error);

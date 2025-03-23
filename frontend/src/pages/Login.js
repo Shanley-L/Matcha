@@ -22,20 +22,14 @@ const Login = () => {
         try {
             const response = await axios.post('/api/auth/login', values);
             const { user } = response.data; // Supposons que l'API retourne un objet utilisateur
-            
-            console.log("User: ", user);
-            
             // Update the authentication context
             await refetchMe();
-            
             if (user.is_first_login) {
-                console.log("First login");
                 navigate('/select-country'); // Première étape après la connexion
             } else {
                 navigate('/home');
             }
         } catch (error) {
-            console.log(error);
             setErrorMessage("Invalid email or password");
         }
     };
