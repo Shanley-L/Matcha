@@ -50,6 +50,13 @@
     justify-content: center;
 }
 
+.location-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
 .filter-button {
     flex: 1;
     padding: 8px 16px;

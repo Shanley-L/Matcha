@@ -55,6 +55,9 @@ const NotificationBell = () => {
       case 'unmatch':
         navigate('/likes');
         break;
+      case 'view':
+        navigate('/viewers');
+        break;
       default:
         navigate('/home');
     }

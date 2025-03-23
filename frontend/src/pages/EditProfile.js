@@ -336,7 +336,7 @@ const EditProfile = () => {
                             fontSize: '1.5rem'
                         }}
                     ></i>
-                    <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Edit Profile</h1>
+                    <h1 style={{ paddingTop: '0.5rem', margin: 0, fontSize: '1.5rem' }}>Edit Profile</h1>
                 </div>
                 <div className='photo-gallery-container'>
                     {user.photos && user.photos.length > 0 ? (

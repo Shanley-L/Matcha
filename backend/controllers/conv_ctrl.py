@@ -42,7 +42,6 @@ class ConversationController:
     @staticmethod
     def list_conversations():
         conversations = ConversationModel.get_conversations(session['user_id'])
-        logging.error("conversations: " + str(conversations))
         return jsonify(conversations)
 
     @staticmethod

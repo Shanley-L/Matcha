@@ -140,6 +140,8 @@ export const NotificationProvider = ({ children }) => {
           return `New message from ${data.sender?.firstname || 'someone'}`;
         case 'unmatch':
           return `${data.user?.firstname || 'Someone'} unmatched with you`;
+        case 'view':
+          return `${data.user?.firstname || 'Someone'} viewed your profile`;
         default:
           return 'You have a new notification';
       }

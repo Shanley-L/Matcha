@@ -55,7 +55,7 @@ const SelectMatch = () => {
                 }
             });
             try {
-                const response = await axios.put('/api/user/update', formData, {
+                    await axios.put('/api/user/update', formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     }

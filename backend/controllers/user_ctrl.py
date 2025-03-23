@@ -7,6 +7,7 @@ import uuid
 import logging
 from app import socketio
 from socket_manager import active_users
+from datetime import datetime
 
 class UserController:
     UPLOAD_FOLDER = './shared/uploads/usersPictures'
@@ -365,6 +366,36 @@ class UserController:
             if not any(v.get('id') == current_user['id'] for v in viewers):
                 viewers.append(viewer_info)
                 UserModel.update_user(target_user_id, viewers=json.dumps(viewers))
+                
+                # Send a profile view notification
+                try:
+                    # Create notification data
+                    view_notification = {
+                        'type': 'view',
+                        'user': {
+                            'id': current_user['id'],
+                            'firstname': current_user.get('firstname', ''),
+                            'username': current_user.get('username', '')
+                        },
+                        'timestamp': UserModel.get_current_timestamp()
+                    }
+                    
+                    # Send view notification to the target user's room
+                    target_room = f"user_{target_user_id}"
+                    socketio.emit('new_notification', view_notification, room=target_room)
+                    logging.info(f"Notification sent to {target_user_id}")
+                    # Also try sending directly to the target user's socket ID if they're active
+                    if target_user_id in active_users:
+                        sid = active_users[target_user_id]
+                        socketio.emit('new_notification', view_notification, room=sid)
+                    
+                    # Also broadcast the notification to all clients for the target user
+                    socketio.emit('broadcast_notification', {
+                        **view_notification,
+                        'target_user_id': target_user_id
+                    })
+                except Exception as e:
+                    logging.error(f"Error sending profile view notification: {str(e)}")
 
         return jsonify(user), 200
 

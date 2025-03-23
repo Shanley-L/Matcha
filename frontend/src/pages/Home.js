@@ -12,6 +12,7 @@ const Home = () => {
     const [minAge, setMinAge] = useState(18);
     const [maxAge, setMaxAge] = useState(50);
     const [selectedGender, setSelectedGender] = useState('female');
+    const [selectedLocation, setSelectedLocation] = useState('world');
     const [potentialMatches, setPotentialMatches] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -28,6 +29,10 @@ const Home = () => {
     const handleMaxAgeChange = (e) => {
         const value = parseInt(e.target.value);
         setMaxAge(Math.max(value, minAge + 1));
+    };
+
+    const handleLocationSelect = async (location) => {
+        setSelectedLocation(location);
     };
 
     const handleGenderSelect = async (gender) => {
@@ -203,8 +208,33 @@ const Home = () => {
                     </div>
 
                     <div className="filter-section">
-                        <h3>Location</h3>
-                        <input type="text" placeholder="Enter location" className="location-input" />
+                        <h3>Filter by Location</h3>
+                        <div className="age-range">
+                            <div className="age-slider-container">
+                                <div className="age-values">
+                                    <span>{minAge}</span>
+                                    <span>{maxAge}</span>
+                                </div>
+                                <div className="slider-track">
+                                    <input 
+                                        type="range" 
+                                        min="18" 
+                                        max="100" 
+                                        value={minAge}
+                                        onChange={handleMinAgeChange}
+                                        className="slider min-slider"
+                                    />
+                                    <input 
+                                        type="range" 
+                                        min="18" 
+                                        max="100" 
+                                        value={maxAge}
+                                        onChange={handleMaxAgeChange}
+                                        className="slider max-slider"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="filter-actions">

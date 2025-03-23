@@ -409,7 +409,7 @@ class UserModel:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
             cursor.execute("""
-                SELECT gender, looking_for, interests, is_blocked_by
+                SELECT gender, looking_for, interests, is_blocked_by, city, country, suburb
                 FROM users 
                 WHERE id = %s
             """, (current_user_id,))
