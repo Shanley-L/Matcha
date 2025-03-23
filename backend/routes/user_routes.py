@@ -70,6 +70,7 @@ def mark_notification_read(notification_id):
 @user_bp.route('/notifications/read/type/<notification_type>', methods=['POST'])
 def mark_notification_type_read(notification_type):
     return UserController.mark_notification_read(notification_type=notification_type)
+
 @user_bp.route('/report', methods=['POST'])
 @email_verified_required
 def report_user():
@@ -97,4 +98,14 @@ def undo_block():
     data = request.json
     target_id = data.get('target_id')
     return UserController.undo_block(target_id)
+
+@user_bp.route('/fame-rate', methods=['GET'])
+def get_fame_rate():
+    """Get fame rate for current user"""
+    return UserController.get_user_fame_rate()
+
+@user_bp.route('/fame-rate/<int:user_id>', methods=['GET'])
+def get_user_fame_rate(user_id):
+    """Get fame rate for a specific user"""
+    return UserController.get_user_fame_rate(user_id)
 

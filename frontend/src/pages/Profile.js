@@ -12,6 +12,7 @@ const Profile = () => {
     const [user, setUser] = useState(null);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
     const [isConnected, setIsConnected] = useState(false);
+    const [fameRate, setFameRate] = useState({ likes: 0, dislikes: 0, fame_rate: 0 });
 
     // Available interests for selection
     const availableInterests = [
@@ -54,6 +55,10 @@ const Profile = () => {
                 const response = await axios.get('/api/user/profile');
                 setUser(response.data);
                 setIsConnected(response.data.is_connected);
+                
+                // Get fame rate
+                const fameResponse = await axios.get('/api/user/fame-rate');
+                setFameRate(fameResponse.data);
             } catch (error) {
                 console.error('Error loading profile:', error);
             } finally {
@@ -185,6 +190,21 @@ const Profile = () => {
                             ) : (
                                 <p>No interest available</p>
                             )}
+                        </div>
+                        
+                        <h2 className="profile-header">Fame Rate</h2>
+                        <div className="fame-rate-container">
+                            <div className="fame-rate-value">
+                                <span className="fame-rate-number">{fameRate.fame_rate}%</span>
+                            </div>
+                            <div className="fame-rate-details">
+                                <div className="fame-rate-stat">
+                                    <i className="fas fa-heart" style={{ color: '#1be4a1' }}></i> {fameRate.likes} likes
+                                </div>
+                                <div className="fame-rate-stat">
+                                    <i className="fas fa-times" style={{ color: '#fd5068' }}></i> {fameRate.dislikes} dislikes
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

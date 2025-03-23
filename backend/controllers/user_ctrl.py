@@ -555,6 +555,7 @@ class UserController:
                 "error": "Failed to mark notification as read",
                 "details": str(e)
             }), 400
+
     def block_user(target_id):
         if 'user_id' not in session:
             return jsonify({"message": "Unauthorized"}), 401
@@ -612,5 +613,25 @@ class UserController:
             logging.error(f"Error updating report status: {str(e)}")
             return jsonify({
                 "error": "Failed to update report status",
+                "details": str(e)
+            }), 400
+
+    @staticmethod
+    def get_user_fame_rate(user_id=None):
+        """Get the fame rate for a user based on likes and dislikes"""
+        if 'user_id' not in session:
+            return jsonify({"message": "Unauthorized"}), 401
+            
+        try:
+            # If no user_id is provided, use the current user
+            target_id = user_id if user_id else session['user_id']
+            
+            # Get fame rate statistics
+            fame_data = UserModel.get_fame_rate(target_id)
+            return jsonify(fame_data), 200
+        except Exception as e:
+            logging.error(f"Error getting fame rate: {str(e)}")
+            return jsonify({
+                "error": "Failed to get fame rate",
                 "details": str(e)
             }), 400

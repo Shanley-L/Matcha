@@ -245,3 +245,38 @@ h2.profile-header {
     text-align: center;
     width: 100%;
 }
+
+/* Add these styles for the fame rate section */
+.fame-rate-container {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fame-rate-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fame-rate-number {
+    color: #9333EA;
+    font-size: 1.5rem;
+}
+
+.fame-rate-details {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.fame-rate-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}

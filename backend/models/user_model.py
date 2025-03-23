@@ -353,6 +353,57 @@ class UserModel:
                 connection.close()
 
     @staticmethod
+    def get_fame_rate(user_id):
+        """
+        Calculate the fame rate based on likes and dislikes
+        Returns a dictionary with likes, dislikes, and fame_rate
+        """
+        try:
+            connection = mysql.connector.connect(**db_config)
+            cursor = connection.cursor()
+            
+            # Get likes count
+            likes_query = """
+                SELECT COUNT(*) as count
+                FROM user_interactions
+                WHERE target_user_id = %s
+                AND interaction_type = 'like'
+            """
+            cursor.execute(likes_query, (user_id,))
+            likes_count = cursor.fetchone()[0]
+            
+            # Get dislikes count
+            dislikes_query = """
+                SELECT COUNT(*) as count
+                FROM user_interactions
+                WHERE target_user_id = %s
+                AND interaction_type = 'dislike'
+            """
+            cursor.execute(dislikes_query, (user_id,))
+            dislikes_count = cursor.fetchone()[0]
+            
+            # Calculate fame rate
+            total_interactions = likes_count + dislikes_count
+            fame_rate = 0
+            if total_interactions > 0:
+                fame_rate = round((likes_count / total_interactions) * 100)
+            
+            return {
+                "likes": likes_count,
+                "dislikes": dislikes_count,
+                "fame_rate": fame_rate
+            }
+            
+        except mysql.connector.Error as err:
+            logging.error(f"Database error in get_fame_rate: {err}")
+            return {"likes": 0, "dislikes": 0, "fame_rate": 0}
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection:
+                connection.close()
+
+    @staticmethod
     def get_potential_matches(current_user_id, min_age=None, max_age=None):
         try:
             connection = mysql.connector.connect(**db_config)
@@ -396,11 +447,13 @@ class UserModel:
                     FROM user_interactions 
                     WHERE user_id = %s
                 )
+                AND (is_blocked_by IS NULL OR NOT JSON_CONTAINS(is_blocked_by, %s, '$'))
             """
-            params = [current_user_id]
+            params = [current_user_id]  # For the id != %s condition
             if min_age is not None and max_age is not None:
                 params.extend([min_age, max_age])
-            params.append(current_user_id)
+            params.append(current_user_id)  # For the WHERE user_id = %s in subquery
+            params.append(json.dumps(current_user_id))  # For the JSON_CONTAINS function
             
             cursor.execute(query, tuple(params))
             matches = cursor.fetchall()
