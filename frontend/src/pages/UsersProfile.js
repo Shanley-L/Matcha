@@ -123,8 +123,10 @@ const UsersProfile = () => {
     
             if (response.data.message === 'blocked') {
                 setIsBlocked(true);
+                navigate('/likes');
             } else if (response.data.message === 'unblocked') {
                 setIsBlocked(false);
+                navigate('/likes');
             }
         } catch (error) {
             console.error('Error toggling block status:', error);
