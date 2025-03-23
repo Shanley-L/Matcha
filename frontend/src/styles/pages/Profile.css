@@ -47,8 +47,10 @@ h2.profile-header {
 }
 
 .content {
+    width: 100%;
     padding: 0;
-    overflow-y: auto;
+    position: absolute;
+    overflow-y: scroll;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -59,6 +61,7 @@ h2.profile-header {
     position: relative;
     margin: 15px auto;
     width: 90%;
+    min-height: 450px;
     max-width: 450px;
     aspect-ratio: 1;
     max-height: 40vh; /* Limit height to prevent overflow */
@@ -68,7 +71,7 @@ h2.profile-header {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    /* overflow: hidden; */
     border-radius: 12px;
     background-color: #f5f5f5;
 }
@@ -169,7 +172,7 @@ h2.profile-header {
 /* Adjust for smaller screens */
 @media (max-height: 700px) {
     .photo-gallery-container {
-        max-height: 35vh;
+        min-height: 300px;
         margin: 10px auto;
     }
     
@@ -192,7 +195,7 @@ h2.profile-header {
 /* Adjust for very small screens */
 @media (max-height: 600px) {
     .photo-gallery-container {
-        max-height: 30vh;
+        min-height: 300px;
     }
     
     .profile-info {
