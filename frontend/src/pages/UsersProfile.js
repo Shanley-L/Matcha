@@ -382,6 +382,7 @@ const UsersProfile = () => {
                         <h2 className="profile-header">About</h2>
                         <p>{user.job}, {user.country}</p>
                         {user.bio && <p>{user.bio}</p>}
+                        <p>Actually in : {user.city}, {user.suburb}</p>
 
                         <h2 className="profile-header">Interests</h2>
                         <div className='interest-array'>
