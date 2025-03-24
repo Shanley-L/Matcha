@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
     country VARCHAR(100),
     city VARCHAR(100),
     suburb VARCHAR(255),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(10, 8),
     interests JSON,
     is_first_login BOOLEAN DEFAULT TRUE,
     is_email_verified BOOLEAN DEFAULT FALSE,

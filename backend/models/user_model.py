@@ -13,7 +13,7 @@ class UserModel:
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id, username, email, is_email_verified, firstname,\
             birthdate, country, gender, looking_for, interests, photos, match_type,\
-            job, bio, city, suburb, created_at, is_connected, latest_connection, viewers FROM users WHERE id = %s", (user_id,))
+            job, bio, city, suburb, latitude, longitude, created_at, is_connected, latest_connection, viewers FROM users WHERE id = %s", (user_id,))
             user = cursor.fetchone()
             if user:
                 if user.get('interests') and isinstance(user['interests'], bytes):
@@ -30,6 +30,10 @@ class UserModel:
                     user['city'] = user['city']
                 if user.get('suburb'):
                     user['suburb'] = user['suburb']
+                if user.get('latitude'):
+                    user['latitude'] = float(user['latitude'])
+                if user.get('longitude'):
+                    user['longitude'] = float(user['longitude'])
                 if user.get('is_connected'):
                     user['is_connected'] = user['is_connected']
                 if user.get('latest_connection'):
@@ -99,7 +103,7 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def update_user(user_id, username=None, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None, city=None, suburb=None):
+    def update_user(user_id, username=None, firstname=None, birthdate=None, country=None, gender=None, looking_for=None, interests=None, photos=None, matchType=None, is_first_login=None, job=None, bio=None, viewers=None, city=None, suburb=None, latitude=None, longitude=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor()
@@ -159,6 +163,12 @@ class UserModel:
             if suburb:
                 update_fields.append("suburb = %s")
                 params.append(suburb)
+            if latitude:
+                update_fields.append("latitude = %s")
+                params.append(latitude)
+            if longitude:
+                update_fields.append("longitude = %s")
+                params.append(longitude)
             if not update_fields:
                 return None, "No fields to update"
             sql = f"UPDATE users SET {', '.join(update_fields)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"

@@ -95,7 +95,9 @@ class UserController:
                 bio=data.get('bio'),
                 viewers=data.get('viewers'),
                 city=data.get('city'),
-                suburb=data.get('suburb')
+                suburb=data.get('suburb'),
+                latitude=data.get('latitude'),
+                longitude=data.get('longitude')
             )
 
             if updated_user_id:

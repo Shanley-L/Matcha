@@ -27,7 +27,10 @@ const EditProfile = () => {
         country: '',
         bio: '',
         city: '',
-        suburb: ''
+        suburb: '',
+        address: '',
+        latitude: '',
+        longitude: ''
     });
 
     // Available interests for selection
@@ -158,7 +161,8 @@ const EditProfile = () => {
                 country: user.country || '',
                 bio: user.bio || '',
                 city: user.city || '',
-                suburb: user.suburb || ''
+                suburb: user.suburb || '',
+                address: user.address || '',
             });
         }
     }, [user, months]);
@@ -227,36 +231,134 @@ const EditProfile = () => {
         }
     };
 
+    const geocodeAddress = async (address) => {
+        try {
+            // Recherche initiale avec restriction France
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=fr&addressdetails=1`
+            );
+            
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+    
+            const data = await response.json();
+            
+            if (!data || data.length === 0) {
+                throw new Error("Aucun résultat trouvé pour cette adresse.");
+            }
+    
+    
+            // On prend le premier résultat (le plus pertinent)
+            const firstResult = data[0];
+            
+            // Récupération des détails d'adresse
+            let addressDetails = firstResult.address;
+            
+            // Logique intelligente pour déterminer city/suburb en fonction du type de résultat
+            let city, suburb;
+            
+            // Cas 1: Grandes villes (Paris, Lyon, etc.)
+            if (addressDetails.city) {
+                city = addressDetails.city;
+                suburb = addressDetails.suburb || addressDetails.neighbourhood || addressDetails.city_district || "Inconnu";
+            } 
+            // Cas 2: Villes moyennes (utilise 'town')
+            else if (addressDetails.town) {
+                city = addressDetails.town;
+                suburb = addressDetails.suburb || addressDetails.village || addressDetails.municipality || "Inconnu";
+            }
+            // Cas 3: Petites communes/villages
+            else if (addressDetails.village) {
+                city = addressDetails.village;
+                suburb = addressDetails.hamlet || addressDetails.locality || "Inconnu";
+            }
+            // Cas 4: Quartiers spécifiques (comme dans votre exemple Conflans-Sainte-Honorine)
+            else if (addressDetails.municipality) {
+                city = addressDetails.municipality;
+                suburb = addressDetails.suburb || addressDetails.neighbourhood || addressDetails.town || "Inconnu";
+            }
+            // Cas par défaut
+            else {
+                city = "Inconnu";
+                suburb = "Inconnu";
+            }
+    
+            // Construction de l'objet de localisation
+            const locationInfo = {
+                address: firstResult.display_name,
+                latitude: parseFloat(firstResult.lat),
+                longitude: parseFloat(firstResult.lon),
+                city: city,
+                suburb: suburb,
+                postcode: addressDetails.postcode || "Inconnu",
+                country: addressDetails.country || "France",
+                rawData: firstResult // On conserve les données brutes pour debug
+            };
+    
+            return locationInfo;
+        } catch (error) {
+            console.error("Erreur lors du géocodage:", error);
+            throw error;
+        }
+    };
+
     const handleSaveAbout = async () => {
         try {
-            if (!formData.job && !formData.country && !formData.bio) {
-                alert('Please fill in at least one field');
+            if (!formData.job && !formData.country && !formData.bio && !formData.address) {
+                alert('Veuillez remplir au moins un champ');
                 return;
             }
-
+    
+            // 1. Préparer FormData pour l'envoi
             const formDataToSend = new FormData();
-            if (formData.job?.trim()) formDataToSend.append('job', formData.job.trim());
-            if (formData.country?.trim()) formDataToSend.append('country', formData.country.trim());
-            if (formData.bio?.trim()) formDataToSend.append('bio', formData.bio.trim());
-            if (formData.city?.trim()) formDataToSend.append('city', formData.city.trim());
-            if (formData.suburb?.trim()) formDataToSend.append('suburb', formData.suburb.trim());
-
-            const response = await axios.put('/api/user/update', formDataToSend);
             
-            if (response.data) {
+            // 2. Ajouter tous les champs textuels
+            if (formData.job) formDataToSend.append('job', formData.job);
+            if (formData.country) formDataToSend.append('country', formData.country);
+            if (formData.bio) formDataToSend.append('bio', formData.bio);
+
+            let geoLocation = null;
+            
+            // 3. Si adresse fournie, géocoder et ajouter les champs GPS
+            if (formData.address) {
+                geoLocation = await geocodeAddress(formData.address); // Changé ici
+                formDataToSend.append('city', geoLocation.city);
+                formDataToSend.append('suburb', geoLocation.suburb);
+                formDataToSend.append('latitude', geoLocation.latitude.toString());
+                formDataToSend.append('longitude', geoLocation.longitude.toString());
+            }
+    
+            // 4. Envoyer avec le bon Content-Type
+            const response = await axios.put('/api/user/update', formDataToSend, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            
+            if (response.data.message === "User profile updated successfully") {
                 setUser(prev => ({
                     ...prev,
-                    job: formData.job?.trim() || prev.job,
-                    country: formData.country?.trim() || prev.country,
-                    bio: formData.bio?.trim() || prev.bio,
-                    city: formData.city?.trim() || prev.city,
-                    suburb: formData.suburb?.trim() || prev.suburb
+                    ...(formData.job && { job: formData.job }),
+                    ...(formData.country && { country: formData.country }),
+                    ...(formData.bio && { bio: formData.bio }),
+                    ...(formData.address && {
+                        city: geoLocation.city, // Changé ici
+                        suburb: geoLocation.suburb, // Changé ici
+                        latitude: geoLocation.latitude.toString(), // Changé ici
+                        longitude: geoLocation.longitude.toString() // Changé ici
+                    })
                 }));
                 setIsEditingAbout(false);
+            } else {
+                throw new Error(response.data.error || "Erreur inconnue");
             }
         } catch (error) {
-            console.error('Error updating about:', error);
-            alert(error.response?.data?.details || 'Error updating about section');
+            console.error('Erreur:', error);
+            alert(error.response?.data?.details || 
+                 (error.message.includes('Aucun résultat') ? 
+                  "Adresse introuvable. Essayez une formulation différente." : 
+                  "Erreur lors de la mise à jour"));
         }
     };
 
@@ -498,18 +600,10 @@ const EditProfile = () => {
                                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
                                     <input
                                         type="text"
-                                        name="city"
-                                        value={formData.city}
+                                        name="address"
+                                        value={formData.address}
                                         onChange={handleInputChange}
-                                        placeholder="City"
-                                        style={formStyles.input}
-                                    />
-                                    <input
-                                        type="text"
-                                        name="suburb"
-                                        value={formData.suburb}
-                                        onChange={handleInputChange}
-                                        placeholder="Suburb"
+                                        placeholder="Address"
                                         style={formStyles.input}
                                     />
                                 </div>
