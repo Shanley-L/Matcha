@@ -130,10 +130,14 @@ class UserController:
 
             min_age = request.args.get('min_age', type=int)
             max_age = request.args.get('max_age', type=int)
+            distance = request.args.get('distance', type=int)
+            fame_rating = request.args.get('fame_rating', type=int)
             matches = UserModel.get_potential_matches(
                 current_user_id=session['user_id'],
                 min_age=min_age,
-                max_age=max_age
+                max_age=max_age,
+                distance=distance,
+                fame_rating=fame_rating
             )
             return jsonify(matches), 200
         except Exception as e:

@@ -15,21 +15,34 @@ const Home = () => {
     const [potentialMatches, setPotentialMatches] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [distance, setDistance] = useState(10);
+    const [fameRating, setFameRating] = useState(100);
+    // Temporary filter state for the filter panel
+    const [tempMinAge, setTempMinAge] = useState(minAge);
+    const [tempMaxAge, setTempMaxAge] = useState(maxAge);
+    const [tempDistance, setTempDistance] = useState(distance);
+    const [tempFameRating, setTempFameRating] = useState(fameRating);
 
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
+        // When opening, sync temp state with current filters
+        if (!isFilterOpen) {
+            setTempMinAge(minAge);
+            setTempMaxAge(maxAge);
+            setTempDistance(distance);
+            setTempFameRating(fameRating);
+        }
     };
 
     const handleMinAgeChange = (e) => {
         const value = parseInt(e.target.value);
-        setMinAge(Math.min(value, maxAge - 1));
+        setTempMinAge(Math.min(value, tempMaxAge - 1));
     };
 
     const handleMaxAgeChange = (e) => {
         const value = parseInt(e.target.value);
-        setMaxAge(Math.max(value, minAge + 1));
+        setTempMaxAge(Math.max(value, tempMinAge + 1));
     };
-
 
     const handleGenderSelect = async (gender) => {
         try {
@@ -44,7 +57,6 @@ const Home = () => {
             setSelectedGender(gender);
             setPotentialMatches([]);
             setCurrentIndex(0);
-            await fetchPotentialMatches();
         } catch (error) {
             console.error('Error updating preference:', error);
         } finally {
@@ -57,14 +69,16 @@ const Home = () => {
             const response = await axios.get('/api/user/matches', {
                 params: {
                     min_age: minAge,
-                    max_age: maxAge
+                    max_age: maxAge,
+                    distance: distance,
+                    fame_rating: fameRating
                 }
             });
             setPotentialMatches(response.data);
         } catch (error) {
             console.error('Error fetching matches:', error);
         }
-    }, [minAge, maxAge]);
+    }, [minAge, maxAge, distance, fameRating]);
 
     const handleSwipe = async (direction, userId) => {
         try {
@@ -84,10 +98,14 @@ const Home = () => {
     };
 
     const handleApplyFilters = async () => {
+        setMinAge(tempMinAge);
+        setMaxAge(tempMaxAge);
+        setDistance(tempDistance);
+        setFameRating(tempFameRating);
         setCurrentIndex(0);
         setPotentialMatches([]);
-        await fetchPotentialMatches();
         setIsFilterOpen(false);
+        // fetchPotentialMatches will be triggered by useEffect when filter state changes
     };
 
     useEffect(() => {
@@ -104,7 +122,11 @@ const Home = () => {
         };
         
         fetchInitialData();
-    }, [fetchPotentialMatches]);
+    }, []);
+
+    useEffect(() => {
+        fetchPotentialMatches();
+    }, [minAge, maxAge, distance, fameRating]);
 
     return (
         <div className="home-container" style={{ width: '100%' }}>
@@ -178,15 +200,15 @@ const Home = () => {
                         <div className="age-range">
                             <div className="age-slider-container">
                                 <div className="age-values">
-                                    <span>{minAge}</span>
-                                    <span>{maxAge}</span>
+                                    <span>{tempMinAge}</span>
+                                    <span>{tempMaxAge}</span>
                                 </div>
                                 <div className="slider-track">
                                     <input 
                                         type="range" 
                                         min="18" 
                                         max="100" 
-                                        value={minAge}
+                                        value={tempMinAge}
                                         onChange={handleMinAgeChange}
                                         className="slider min-slider"
                                     />
@@ -194,7 +216,7 @@ const Home = () => {
                                         type="range" 
                                         min="18" 
                                         max="100" 
-                                        value={maxAge}
+                                        value={tempMaxAge}
                                         onChange={handleMaxAgeChange}
                                         className="slider max-slider"
                                     />
@@ -204,29 +226,41 @@ const Home = () => {
                     </div>
 
                     <div className="filter-section">
-                        <h3>Filter by Location</h3>
-                        <div className="age-range">
-                            <div className="age-slider-container">
-                                <div className="age-values">
-                                    <span>{minAge}</span>
-                                    <span>{maxAge}</span>
+                        <h3>Filter by Distance</h3>
+                        <div className="distance-range">
+                            <div className="distance-slider-container">
+                                <div className="distance-value">
+                                    <span>{tempDistance} km</span>
                                 </div>
                                 <div className="slider-track">
                                     <input 
                                         type="range" 
-                                        min="18" 
+                                        min="1" 
                                         max="100" 
-                                        value={minAge}
-                                        onChange={handleMinAgeChange}
-                                        className="slider min-slider"
+                                        value={tempDistance}
+                                        onChange={e => setTempDistance(Number(e.target.value))}
+                                        className="slider distance-slider"
                                     />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="filter-section">
+                        <h3>Filter by Fame Rating</h3>
+                        <div className="fame-rating-range">
+                            <div className="fame-rating-slider-container">
+                                <div className="fame-rating-value">
+                                    <span>{tempFameRating}%</span>
+                                </div>
+                                <div className="slider-track">
                                     <input 
                                         type="range" 
-                                        min="18" 
+                                        min="1" 
                                         max="100" 
-                                        value={maxAge}
-                                        onChange={handleMaxAgeChange}
-                                        className="slider max-slider"
+                                        value={tempFameRating}
+                                        onChange={e => setTempFameRating(Number(e.target.value))}
+                                        className="slider fame-rating-slider"
                                     />
                                 </div>
                             </div>
@@ -235,9 +269,11 @@ const Home = () => {
 
                     <div className="filter-actions">
                         <button className="reset-button" onClick={() => {
-                            setMinAge(18);
-                            setMaxAge(50);
+                            setTempMinAge(18);
+                            setTempMaxAge(50);
                             setSelectedGender('female');
+                            setTempDistance(10);
+                            setTempFameRating(100);
                         }}>Reset</button>
                         <button className="apply-button" onClick={handleApplyFilters}>Apply</button>
                     </div>

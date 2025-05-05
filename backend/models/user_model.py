@@ -4,6 +4,7 @@ from flask import jsonify
 import logging
 import json
 import datetime
+import math
 
 class UserModel:
     @staticmethod
@@ -414,12 +415,12 @@ class UserModel:
                 connection.close()
 
     @staticmethod
-    def get_potential_matches(current_user_id, min_age=None, max_age=None):
+    def get_potential_matches(current_user_id, min_age=None, max_age=None, distance=None, fame_rating=None):
         try:
             connection = mysql.connector.connect(**db_config)
             cursor = connection.cursor(dictionary=True)
             cursor.execute("""
-                SELECT gender, looking_for, interests, is_blocked_by, city, country, suburb
+                SELECT gender, looking_for, interests, is_blocked_by, city, country, suburb, latitude, longitude
                 FROM users 
                 WHERE id = %s
             """, (current_user_id,))
@@ -508,7 +509,57 @@ class UserModel:
                     match_score = len(common_interests)
                 processed_match['match_score'] = match_score
                 processed_matches.append(processed_match)
-            processed_matches.sort(key=lambda x: x['match_score'], reverse=True)
+
+            # Filter by distance if requested and user has lat/lon
+            if distance is not None and current_user.get('latitude') and current_user.get('longitude'):
+                def haversine(lat1, lon1, lat2, lon2):
+                    from math import radians, sin, cos, sqrt, atan2
+                    R = 6371  # Earth radius in km
+                    dlat = radians(lat2 - lat1)
+                    dlon = radians(lon2 - lon1)
+                    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+                    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+                    return R * c
+                user_lat = float(current_user['latitude'])
+                user_lon = float(current_user['longitude'])
+                filtered_matches = []
+                for m in processed_matches:
+                    if m.get('latitude') and m.get('longitude'):
+                        dist = haversine(user_lat, user_lon, float(m['latitude']), float(m['longitude']))
+                        m['distance_km'] = round(dist)
+                        if dist <= distance:
+                            filtered_matches.append(m)
+                processed_matches = filtered_matches
+            else:
+                # Even if not filtering, still add distance if possible
+                if current_user.get('latitude') and current_user.get('longitude'):
+                    def haversine(lat1, lon1, lat2, lon2):
+                        from math import radians, sin, cos, sqrt, atan2
+                        R = 6371  # Earth radius in km
+                        dlat = radians(lat2 - lat1)
+                        dlon = radians(lon2 - lon1)
+                        a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+                        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+                        return R * c
+                    user_lat = float(current_user['latitude'])
+                    user_lon = float(current_user['longitude'])
+                    for m in processed_matches:
+                        if m.get('latitude') and m.get('longitude'):
+                            dist = haversine(user_lat, user_lon, float(m['latitude']), float(m['longitude']))
+                            m['distance_km'] = round(dist)
+
+            # Filter by fame_rating if requested
+            if fame_rating is not None:
+                fame_rating = int(fame_rating)
+                filtered_matches = []
+                for m in processed_matches:
+                    fame = UserModel.get_fame_rate(m['id'])
+                    if fame and fame.get('fame_rate', 0) <= fame_rating:
+                        m['fame_rate'] = fame.get('fame_rate', 0)
+                        filtered_matches.append(m)
+                processed_matches = filtered_matches
+
+            processed_matches.sort(key=lambda x: x.get('match_score', 0), reverse=True)
             return processed_matches
             
         except mysql.connector.Error as err:

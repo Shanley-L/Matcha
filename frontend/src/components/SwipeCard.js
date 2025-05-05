@@ -1,70 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { FaRedo } from 'react-icons/fa';
 import { IoLocationOutline } from 'react-icons/io5';
 import PhotoModal from './PhotoModal';
-import axios from '../config/axios';
 import '../styles/components/SwipeCard.css';
 
 const SwipeCard = ({ user, onSwipe }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [distance, setDistance] = useState(null);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-30, 30]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
-
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) {
-      console.log('Missing coordinates:', { lat1, lon1, lat2, lon2 });
-      return null;
-    }
-    
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    return Math.round(distance);
-  };
-
-  useEffect(() => {
-    const fetchUserLocation = async () => {
-      try {
-        const response = await axios.get('/api/user/profile');
-        const currentUser = response.data;
-        
-        // Convert coordinates to numbers and check if they exist
-        const currentLat = parseFloat(currentUser.latitude);
-        const currentLon = parseFloat(currentUser.longitude);
-        const userLat = parseFloat(user.latitude);
-        const userLon = parseFloat(user.longitude);
-
-        if (!isNaN(currentLat) && !isNaN(currentLon) && !isNaN(userLat) && !isNaN(userLon)) {
-          const dist = calculateDistance(currentLat, currentLon, userLat, userLon);
-          console.log('Distance calculated:', dist, 'km');
-          setDistance(dist);
-        } else {
-          console.log('Invalid coordinates:', {
-            currentLat,
-            currentLon,
-            userLat,
-            userLon
-          });
-          setDistance(null);
-        }
-      } catch (error) {
-        console.error('Error fetching user location:', error);
-        setDistance(null);
-      }
-    };
-    fetchUserLocation();
-  }, [user]);
 
   const handleDragStart = () => {
     setIsDragging(true);
@@ -243,10 +190,10 @@ const SwipeCard = ({ user, onSwipe }) => {
               <div className="card-info">
                 <h2 className="card-name">{user.firstname}, {userAge || '?'}</h2>
                 {user.job && <p className="card-bio">{user.job}</p>}
-                {distance !== null && (
+                {typeof user.distance_km === 'number' && (
                   <p className="card-distance">
                     <IoLocationOutline />
-                    {distance} km away
+                    {user.distance_km} km away
                   </p>
                 )}
               </div>
