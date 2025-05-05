@@ -271,4 +271,23 @@
   background-color: #14dce2;
   color: white;
   transform: scale(1.05);
+}
+
+.card-distance {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.card-distance svg {
+  font-size: 16px;
 } 

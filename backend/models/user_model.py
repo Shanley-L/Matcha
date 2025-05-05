@@ -460,7 +460,8 @@ class UserModel:
                 """
 
             query = f"""
-                SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests
+                SELECT id, username, firstname, birthdate, job, bio, photos, country, gender, interests,
+                       latitude, longitude, city, suburb
                 FROM users
                 WHERE id != %s
                 {gender_condition}

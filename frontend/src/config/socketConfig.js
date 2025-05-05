@@ -6,8 +6,8 @@ const getSocketUrl = () => {
     return `${protocol}//${window.location.host}`;
   }
   
-  // In development, use localhost:5000
-  return 'http://localhost:5000';
+  // In development, use localhost:5001
+  return 'http://localhost:5001';
 };
 
 const socketConfig = {

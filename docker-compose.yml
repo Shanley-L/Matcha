@@ -7,7 +7,7 @@ services:
     container_name: matcha_backend
     env_file: .env
     ports:
-      - "${BACKEND_PORT}:5000"
+      - "${BACKEND_PORT}:5001"
     volumes:
       - ./backend:/app
       - ./shared:/app/shared

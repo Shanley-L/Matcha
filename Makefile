@@ -6,11 +6,11 @@ run :
 	@echo "Building and running the app"
 	# mkdir ./frontend/build
 	# mkdir ./backend/src
-	docker compose up --build
+	docker-compose up --build
 
 down :
 	@echo "Stopping the app"
-	docker compose down -v
+	docker-compose down -v
 
 clean: down
 	@echo "Cleaning up"
