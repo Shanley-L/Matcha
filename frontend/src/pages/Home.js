@@ -122,11 +122,11 @@ const Home = () => {
         };
         
         fetchInitialData();
-    }, []);
+    }, [fetchPotentialMatches]);
 
     useEffect(() => {
         fetchPotentialMatches();
-    }, [minAge, maxAge, distance, fameRating]);
+    }, [minAge, maxAge, distance, fameRating, fetchPotentialMatches]);
 
     return (
         <div className="home-container" style={{ width: '100%' }}>

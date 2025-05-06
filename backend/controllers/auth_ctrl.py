@@ -7,6 +7,7 @@ from itsdangerous import URLSafeTimedSerializer as Serializer
 from flask_mail import Message
 from app import app, mail 
 import logging
+from utils.password_utils import contains_english_word
 
 s = Serializer(app.config['SECRET_KEY'])
 
@@ -45,6 +46,9 @@ class AuthController:
         email = data['email']
         password = data['password']
 
+        if contains_english_word(password):
+            return jsonify({"message": "Password cannot contain English words"}), 400
+
         existing_user_email = UserModel.get_by_email(email)
         if existing_user_email:
             return jsonify({"message": "Email is already registered"}), 400
@@ -53,8 +57,8 @@ class AuthController:
         if existing_user_username:
             return jsonify({"message": "Username is already taken"}), 400
 
-        # if not AuthController.is_password_strong(password):
-        #     return jsonify({"message": "Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character"}), 400
+        if not AuthController.is_password_strong(password):
+            return jsonify({"message": "Password must be at least 8 characters long, contain an uppercase letter, a number, and a special character"}), 400
 
         hashed_password = generate_password_hash(password)
         user_id = UserModel.create(username, email, hashed_password)
