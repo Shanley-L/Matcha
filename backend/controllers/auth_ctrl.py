@@ -62,7 +62,7 @@ class AuthController:
 
         hashed_password = generate_password_hash(password)
         user_id = UserModel.create(username, email, hashed_password)
-        
+
         if user_id:
             AuthController.send_confirmation_email(email)
             return jsonify({"message": "User registered successfully!", "user_id": user_id}), 201
