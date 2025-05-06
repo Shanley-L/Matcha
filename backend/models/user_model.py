@@ -510,6 +510,25 @@ class UserModel:
                 processed_match['match_score'] = match_score
                 processed_matches.append(processed_match)
 
+            # Batch fetch fame ratings for all candidate users
+            candidate_ids = [m['id'] for m in processed_matches]
+            fame_data = {}
+            if candidate_ids:
+                format_strings = ','.join(['%s'] * len(candidate_ids))
+                fame_query = f'''
+                    SELECT target_user_id,
+                           SUM(interaction_type = 'like') AS likes,
+                           SUM(interaction_type = 'dislike') AS dislikes
+                    FROM user_interactions
+                    WHERE target_user_id IN ({format_strings})
+                    GROUP BY target_user_id
+                '''
+                cursor.execute(fame_query, tuple(candidate_ids))
+                for row in cursor.fetchall():
+                    total = (row['likes'] or 0) + (row['dislikes'] or 0)
+                    fame_rate = round((row['likes'] / total) * 100) if total > 0 else 0
+                    fame_data[row['target_user_id']] = fame_rate
+
             # Filter by distance if requested and user has lat/lon
             if distance is not None and current_user.get('latitude') and current_user.get('longitude'):
                 def haversine(lat1, lon1, lat2, lon2):
@@ -548,16 +567,14 @@ class UserModel:
                             dist = haversine(user_lat, user_lon, float(m['latitude']), float(m['longitude']))
                             m['distance_km'] = round(dist)
 
+            # Attach fame_rate to each match
+            for m in processed_matches:
+                m['fame_rate'] = fame_data.get(m['id'], 0)
+
             # Filter by fame_rating if requested
             if fame_rating is not None:
                 fame_rating = int(fame_rating)
-                filtered_matches = []
-                for m in processed_matches:
-                    fame = UserModel.get_fame_rate(m['id'])
-                    if fame and fame.get('fame_rate', 0) <= fame_rating:
-                        m['fame_rate'] = fame.get('fame_rate', 0)
-                        filtered_matches.append(m)
-                processed_matches = filtered_matches
+                processed_matches = [m for m in processed_matches if m.get('fame_rate', 0) <= fame_rating]
 
             processed_matches.sort(key=lambda x: x.get('match_score', 0), reverse=True)
             return processed_matches

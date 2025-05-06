@@ -1,11 +1,11 @@
 import React from 'react';
-import { IoSettingsSharp, IoLogOutOutline, IoEye } from 'react-icons/io5';
+import { IoSettingsSharp, IoLogOutOutline, IoEye, IoSwapVertical } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 import NotificationBell from './NotificationBell';
 import '../styles/components/PageHeader.css';
 
-const PageHeader = ({ showSettings, onSettingsClick}) => {
+const PageHeader = ({ showSettings, onSettingsClick, showSort, onSortClick }) => {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -35,6 +35,11 @@ const PageHeader = ({ showSettings, onSettingsClick}) => {
             </div>
             <div className="header-buttons">
                 <NotificationBell />
+                {showSort && (
+                    <button className="settings-button" onClick={onSortClick} aria-label="Sort options">
+                        <IoSwapVertical />
+                    </button>
+                )}
                 {showSettings && (
                     <button className="settings-button" onClick={onSettingsClick}>
                         <IoSettingsSharp />

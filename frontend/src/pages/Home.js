@@ -22,6 +22,10 @@ const Home = () => {
     const [tempMaxAge, setTempMaxAge] = useState(maxAge);
     const [tempDistance, setTempDistance] = useState(distance);
     const [tempFameRating, setTempFameRating] = useState(fameRating);
+    const [sortBy, setSortBy] = useState('interest'); // default: common interest
+    const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+    const [sortedMatches, setSortedMatches] = useState([]);
+    const [isSortOpen, setIsSortOpen] = useState(false);
 
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
@@ -105,7 +109,7 @@ const Home = () => {
         setCurrentIndex(0);
         setPotentialMatches([]);
         setIsFilterOpen(false);
-        // fetchPotentialMatches will be triggered by useEffect when filter state changes
+        await fetchPotentialMatches();
     };
 
     useEffect(() => {
@@ -128,21 +132,101 @@ const Home = () => {
         fetchPotentialMatches();
     }, [minAge, maxAge, distance, fameRating, fetchPotentialMatches]);
 
+    useEffect(() => {
+        // Sorting logic for matches
+        function sortMatches(matches, sortBy, sortOrder) {
+            const sorted = [...matches];
+            const order = sortOrder === 'asc' ? 1 : -1;
+            switch (sortBy) {
+                case 'age':
+                    // Youngest first (asc), oldest first (desc)
+                    sorted.sort((a, b) => {
+                        if (!a.birthdate || !b.birthdate) return 0;
+                        return (new Date(a.birthdate) - new Date(b.birthdate)) * order;
+                    });
+                    break;
+                case 'location':
+                    // Nearest first (asc), farthest first (desc)
+                    sorted.sort((a, b) => {
+                        if (a.distance_km == null) return 1;
+                        if (b.distance_km == null) return -1;
+                        return (a.distance_km - b.distance_km) * order;
+                    });
+                    break;
+                case 'fame':
+                    // Highest fame first (desc), lowest first (asc)
+                    sorted.sort((a, b) => ((b.fame_rate || 0) - (a.fame_rate || 0)) * order);
+                    break;
+                case 'interest':
+                default:
+                    // Most common interests first (desc), least first (asc)
+                    sorted.sort((a, b) => ((b.match_score || 0) - (a.match_score || 0)) * order);
+                    break;
+            }
+            return sorted;
+        }
+        setSortedMatches(sortMatches(potentialMatches, sortBy, sortOrder));
+    }, [potentialMatches, sortBy, sortOrder]);
+
+    // When sortBy changes, set default sortOrder
+    useEffect(() => {
+        if (sortBy === 'age') {
+            setSortOrder('asc');
+        } else {
+            setSortOrder('desc');
+        }
+    }, [sortBy]);
+
     return (
         <div className="home-container" style={{ width: '100%' }}>
-            <PageHeader showSettings={true} onSettingsClick={toggleFilter} />
+            <PageHeader 
+                showSettings={true} 
+                onSettingsClick={toggleFilter}
+                showSort={true}
+                onSortClick={() => setIsSortOpen((open) => !open)}
+            />
+            {/* Sort Dropdown Popout */}
+            {isSortOpen && (
+                <div className="sort-popout">
+                    <div className="sort-popout-content">
+                        <div className="sort-popout-header">
+                            <button className="close-sort-popout" onClick={() => setIsSortOpen(false)} aria-label="Close sort popout">×</button>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 8 }}>
+                            <select
+                                value={sortBy}
+                                onChange={e => setSortBy(e.target.value)}
+                                className="sort-dropdown"
+                            >
+                                <option value="interest">Common Interest</option>
+                                <option value="age">Age</option>
+                                <option value="location">Location</option>
+                                <option value="fame">Fame Rating</option>
+                            </select>
+                            <button
+                                type="button"
+                                className="sort-order-toggle"
+                                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                aria-label="Toggle sort order"
+                            >
+                                {sortOrder === 'asc' ? '↑' : '↓'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <div className="cards-container">
-                {potentialMatches.length > currentIndex && (
+                {sortedMatches.length > currentIndex && (
                     <div className="card-wrapper">
                         <SwipeCard
-                            key={potentialMatches[currentIndex].id}
-                            user={potentialMatches[currentIndex]}
+                            key={sortedMatches[currentIndex].id}
+                            user={sortedMatches[currentIndex]}
                             onSwipe={handleSwipe}
                         />
                     </div>
                 )}
-                {(potentialMatches.length === 0 || currentIndex >= potentialMatches.length) && (
+                {(sortedMatches.length === 0 || currentIndex >= sortedMatches.length) && (
                     <div className="empty-state-message">
                         No more profiles to show right now!
                         Try changing settings or wait for new profiles to be added.
@@ -151,15 +235,15 @@ const Home = () => {
                 <div className="swipe-buttons">
                     <button 
                         className="swipe-button dislike"
-                        onClick={() => handleSwipe('left', potentialMatches[currentIndex]?.id)}
-                        disabled={!potentialMatches[currentIndex]}
+                        onClick={() => handleSwipe('left', sortedMatches[currentIndex]?.id)}
+                        disabled={!sortedMatches[currentIndex]}
                     >
                         <IoClose />
                     </button>
                     <button 
                         className="swipe-button like"
-                        onClick={() => handleSwipe('right', potentialMatches[currentIndex]?.id)}
-                        disabled={!potentialMatches[currentIndex]}
+                        onClick={() => handleSwipe('right', sortedMatches[currentIndex]?.id)}
+                        disabled={!sortedMatches[currentIndex]}
                     >
                         <IoHeart />
                     </button>
@@ -274,6 +358,8 @@ const Home = () => {
                             setSelectedGender('female');
                             setTempDistance(10);
                             setTempFameRating(100);
+                            setSortBy('interest');
+                            setSortOrder('desc');
                         }}>Reset</button>
                         <button className="apply-button" onClick={handleApplyFilters}>Apply</button>
                     </div>
